@@ -10,7 +10,7 @@
 library(shiny)
 library(RPostgres)
 library(DBI)
-source('functions.R')
+source('functions.r')
 
 conn=scdbConnect()
 # Define UI for application that draws a histogram
