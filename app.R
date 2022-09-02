@@ -8,7 +8,11 @@
 #
 
 library(shiny)
+library(RPostgres)
+library(DBI)
+source('functions.R')
 
+conn=scdbConnect()
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
@@ -27,7 +31,8 @@ ui <- fluidPage(
 
         # Show a plot of the generated distribution
         mainPanel(
-           plotOutput("distPlot")
+           plotOutput("distPlot"),
+           print(dbGetQuery(conn,"SELECT name FROM metrics WHERE metricid = '1'"))
         )
     )
 )
