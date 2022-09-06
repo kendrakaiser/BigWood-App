@@ -22,12 +22,12 @@ useData$site[which(useData$locationid == 167 & useData$isprediction == "FALSE")]
 useData$site[which(useData$locationid == 167 & useData$isprediction == "TRUE")]<- c("Camas Creek")
 useData$site<- factor(useData$site, levels = c("Big Wood Hailey Hist","Big Wood Hailey", "Big Wood Stanton Hist", "Big Wood Stanton", "Camas Creek Hist", "Camas Creek" ), ordered = TRUE)
 
-#plot the figure 
-ggplot(useData, aes(x=site, y=value, fill=isprediction), alpha=0.6) +
+#plot the figure; we're going to have so many figures, how are we going to keep them clean/sorted in the app.R script?
+ggplot(useData, aes(x=site, y=value/1000, fill=isprediction), alpha=0.6) +
   geom_boxplot(outlier.alpha = 0.3) +
-  scale_fill_manual(values=c("royalblue3", "grey90")) +
+  scale_fill_manual(values=c("royalblue3", "grey90"), labels=c('Historic', 'Modeled'), name="") +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
-  #scale_y_continuous(breaks = round(seq(0, max(useData$value, na.rm=TRUE), by = 50),1))+
+  scale_y_continuous(breaks = round(seq(0, max(useData$value, na.rm=TRUE), by = 50),1))+
   ggtitle("Historic & Modeled Irrigation Season Volumes (April-Sept.)") +
   xlab("")+
   ylab("Irrigation Season Volume (KAF)") +
