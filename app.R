@@ -3,13 +3,15 @@
 # the 'Run App' button above.
 #
 # Find out more about building applications with Shiny here:
-#
+# Sys.setenv(scdb_readPass="dbread")
 #    http://shiny.rstudio.com/
 #
 
 library(shiny)
 library(RPostgres)
 library(DBI)
+library(ggplot2)
+library(stringr)
 source('functions.r')
 
 conn=scdbConnect()
