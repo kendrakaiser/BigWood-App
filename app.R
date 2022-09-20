@@ -93,7 +93,9 @@ server <- function(input, output) {
   # generate plot from the input variable and date range
   output$varPlot<- renderPlot({
     usemetric = dbGetQuery(conn,"SELECT name FROM metrics WHERE name = 'Dissolved Oxygen';") #input$variable - make sure this output works in the query
-    #input$year
+    #input$year -- this is actually a date range right now
+    #uselocations - I would hard code this for a given DO site for now or just plot data from all DO sensors-- we prob wont want the full list of locations in a drop down?
+    
     #query=paste0("SELECT metric, value, locationid, simnumber FROM data WHERE data.metricid IN ('",
      #            paste0(usemetric$metricid,collapse="', '"),
       #           "') AND data.locationid IN ('",
