@@ -6,7 +6,7 @@
 # Sys.setenv(scdb_readPass="dbread")
 #    http://shiny.rstudio.com/
 # hello
-#merge test sam
+# merge test sam
 # yoyoyo
 library(shiny)
 library(RPostgres)
