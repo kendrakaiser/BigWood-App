@@ -22,15 +22,13 @@ ui <- fluidPage(
     
     # Landing Page
     tabPanel("Big Wood River Streamflow Tools",
-             tags$head(
-               tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
-               tags$meta(name="viewport", content="initial-scale=1")
-             ),
+           #  tags$head(
+            #   tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
+             #  tags$meta(name="viewport", content="initial-scale=1")),
              setBackgroundColor("lightgrey"), 
-             tags$img(class="bg", src="silvercreekSquare.jpg", align = "left"), #class="bg", 
+             tags$img(class="bg", src="silvercreekSquare.jpg", align = "left"), 
              tags$div(class = "text-block", # load CSS .text-block (style and positioning)
-                      tags$h1("Big Wood River"), # Title
-                      tags$h1("Streamflow and Water Quality Tools")),
+                      tags$h1("Big Wood River Streamflow and Water Quality Tools")), # Title
              tags$div(class="landing-block",
                       p(class="lp_text","The Big Wood River Dashboard is an interactive set of tool to visualize 
                                 observational data and modeling ouput in the Big Wood River Basin and Silver Creek"),
@@ -39,8 +37,9 @@ ui <- fluidPage(
                               and you’ll be directed to a dynamic graph for visualization."),
                       p(class="lp_text","The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. 
                               The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. 
-                              The data explorer allows you to dig into the datasets behind these models, and explore changes over time.")
-                      )),
+                              The data explorer allows you to dig into the datasets behind these models, and explore changes over time."))
+             ),
+
     # Streamflow Tools
     tabPanel("Big Wood River Streamflow Tools",
              
@@ -79,9 +78,9 @@ ui <- fluidPage(
                  h4("Select Data Extent:"),
                  leafletOutput("dataExtentMap",width="auto",height="250px")
                ),
-               
-               mainPanel())
-    )))
+               mainPanel()
+               ))
+  ))
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
