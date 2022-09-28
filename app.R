@@ -146,6 +146,7 @@ server <- function(input, output) {
   
   observeEvent(input$dataExtentMap_bounds, {
     print(input$dataExtentMap_bounds)
+    print(names(input))
   })
 }
 
