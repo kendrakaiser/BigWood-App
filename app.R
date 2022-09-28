@@ -61,13 +61,13 @@ ui <- fluidPage(
                    NULL,
                    choices= dbGetQuery(conn,"SELECT name FROM metrics;"),
                    selected = NULL,
-                   multiple = FALSE,
+                   multiple = T,
                    selectize = TRUE,
                    width = NULL,
                    size = NULL
                  ),
                  h4("Select Data Extent:"),
-                 leafletOutput("dataExtentMap",width="auto",height="250px")
+                 leafletOutput("dataExtentMap",width="auto",height="300px")
                ),
                
                mainPanel( 
