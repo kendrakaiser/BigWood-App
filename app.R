@@ -12,41 +12,70 @@ library(RPostgres)
 library(DBI)
 library(ggplot2)
 library(stringr)
+library(leaflet)
 source('functions.r')
 
 conn=scdbConnect()
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  
-  # Application title
-  titlePanel("Big Wood River Streamflow Tools"),
-  
-  # Sidebar with a slider input for number of bins 
-  sidebarLayout(
-    sidebarPanel(
-      dateRangeInput("year",
-                  "Date Range",
-                  start = "2020-10-01",
-                  end = "2021-10-01",
-                  min = "1990-10-01",
-                  max = "2022-10-01"),
-      
-      selectInput(
-        "variable",
-        "Select Variable:",
-        choices= dbGetQuery(conn,"SELECT name FROM metrics;"),
-        selected = NULL,
-        multiple = FALSE,
-        selectize = TRUE,
-        width = NULL,
-        size = NULL
-      )),
+  tabsetPanel(
     
-    # Show a plot of the generated distribution
-    mainPanel(
-      plotOutput("predPlot"),
-      plotOutput("varPlot"),
-      print(dbGetQuery(conn,"SELECT name FROM metrics WHERE metricid = '1'"))
+    # Application title
+    tabPanel("Big Wood River Streamflow Tools",
+             
+             # Sidebar with a slider input for number of bins 
+             sidebarLayout(
+               sidebarPanel(
+                 dateRangeInput("year",
+                                "Date Range",
+                                start = "2020-10-01",
+                                end = "2021-10-01",
+                                min = "1990-10-01",
+                                max = "2022-10-01"),
+                 
+                 selectInput(
+                   "variable",
+                   "Select Variable:",
+                   choices= dbGetQuery(conn,"SELECT name FROM metrics;"),
+                   selected = NULL,
+                   multiple = FALSE,
+                   selectize = TRUE,
+                   width = NULL,
+                   size = NULL
+                 )),
+               
+               # Show a plot of the generated distribution
+               mainPanel(
+                 plotOutput("predPlot"),
+                 plotOutput("varPlot"),
+               )
+             )
+    ),
+    tabPanel("Water Quality Data Explorer",
+             
+             sidebarLayout(
+               sidebarPanel(
+                 h4("Select Variable(s):"),
+                 selectInput(
+                   "wqVars",
+                   NULL,
+                   choices= dbGetQuery(conn,"SELECT name FROM metrics;"),
+                   selected = NULL,
+                   multiple = FALSE,
+                   selectize = TRUE,
+                   width = NULL,
+                   size = NULL
+                 ),
+                 h4("Select Data Extent:"),
+                 leafletOutput("dataExtentMap",width="auto",height="250px")
+               ),
+               
+               mainPanel( 
+                 
+                 
+                 
+               )
+             )
     )
   )
 )
@@ -95,13 +124,28 @@ server <- function(input, output) {
     usemetric = dbGetQuery(conn,"SELECT name FROM metrics WHERE name = 'Dissolved Oxygen';") #input$variable - make sure this output works in the query
     #input$year
     #query=paste0("SELECT metric, value, locationid, simnumber FROM data WHERE data.metricid IN ('",
-     #            paste0(usemetric$metricid,collapse="', '"),
-      #           "') AND data.locationid IN ('",
-       #          paste0(useLocations$locationid,collapse="', '"),"');")
+    #            paste0(usemetric$metricid,collapse="', '"),
+    #           "') AND data.locationid IN ('",
+    #          paste0(useLocations$locationid,collapse="', '"),"');")
     
     #useData=dbGetQuery(conn,query)
     
     #ggplot(useData)
+  })
+  
+  dataExtentMap = leaflet( leafletOptions(leafletCRS(crsClass="L.CRS.EPSG4326")) )
+  
+  dataExtentMap = setView(map=dataExtentMap,lng=-114.15,lat=43.33,zoom=12)
+  
+  dataExtentMap = addWMSTiles(map=dataExtentMap,baseUrl="https://basemap.nationalmap.gov/arcgis/services/USGSImageryOnly/MapServer/WmsServer",
+                              layers=0,
+                              attribution = 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>',
+                              tileOptions(zIndex=1))
+  output$dataExtentMap = renderLeaflet(dataExtentMap)
+  
+  
+  observeEvent(input$dataExtentMap_bounds, {
+    print(input$dataExtentMap_bounds)
   })
 }
 
