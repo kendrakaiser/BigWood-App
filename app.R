@@ -22,10 +22,11 @@ ui <- fluidPage(
     
     # Landing Page
     tabPanel("Big Wood River Streamflow Tools",
-             tags$head(
-               tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
-               tags$meta(name="viewport", content="initial-scale=1")
-             ),
+             
+             #tags$head(
+            #   tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
+            #   tags$meta(name="viewport", content="initial-scale=1")
+            # ),
              setBackgroundColor("lightgrey"), 
              tags$img(class="bg", src="silvercreekSquare.jpg", align = "left"), #class="bg", 
              tags$div(class = "text-block", # load CSS .text-block (style and positioning)
@@ -40,7 +41,9 @@ ui <- fluidPage(
                       p(class="lp_text","The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. 
                               The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. 
                               The data explorer allows you to dig into the datasets behind these models, and explore changes over time.")
-                      )),
+             )
+             
+    ),
     # Streamflow Tools
     tabPanel("Big Wood River Streamflow Tools",
              
@@ -53,7 +56,7 @@ ui <- fluidPage(
                                 end = "2021-10-01",
                                 min = "1990-10-01",
                                 max = "2022-10-01"),
-                 ),
+               ),
                
                # Show a plot of the generated distribution
                mainPanel(
@@ -81,7 +84,10 @@ ui <- fluidPage(
                ),
                
                mainPanel())
-    )))
+    )
+  )
+)
+
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
