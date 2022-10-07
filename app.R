@@ -12,10 +12,12 @@ library(DBI)
 library(ggplot2)
 library(stringr)
 library(leaflet)
+
 library(shinyWidgets)
 source('functions.r')
 
 conn=scdbConnect()
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   tabsetPanel(
@@ -69,7 +71,7 @@ ui <- fluidPage(
                sidebarPanel(
                  h4("Select Variable(s):"),
                  selectInput(
-                   "wqVars",
+                   "plotVars",
                    NULL,
                    choices= dbGetQuery(conn,"SELECT name FROM metrics;"),
                    selected = NULL,
@@ -78,12 +80,31 @@ ui <- fluidPage(
                    width = NULL,
                    size = NULL
                  ),
+                 h4("Select Date Range"),
+                 sliderInput("plotTime",
+                             NULL,
+                             min = minDateTime,
+                             max = maxDateTime,
+                             value = c(maxDateTime-365,maxDateTime-335),
+                             step=1),
+                 #use updateSliderInput to limit range?
                  h4("Select Data Extent:"),
-                 leafletOutput("dataExtentMap",width="auto",height="300px")
+                 leafletOutput("plotExtent",width="auto",height="300px"),
+                 actionButton("makePlot", "Make Plot")
                ),
-               mainPanel()
-               ))
-  ))
+
+               
+               
+               mainPanel( 
+                 plotOutput("dataPlot")
+                 
+                 
+               )
+             )
+    )
+  )
+)
+
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -149,13 +170,30 @@ server <- function(input, output) {
                               layers=0,
                               attribution = 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>',
                               tileOptions(zIndex=1))
-  output$dataExtentMap = renderLeaflet(dataExtentMap)
+  output$plotExtent = renderLeaflet(dataExtentMap)
   
   
-  observeEvent(input$dataExtentMap_bounds, {
-    print(input$dataExtentMap_bounds)
-    print(names(input))
+  
+  
+  observeEvent(input$makePlot,{
+    print(input$plotExtent_bounds)
+    plotData=getDataByVarTimeExtent(useVars=input$plotVars,
+                                    startDateTime=input$plotTime[1],
+                                    endDateTime = input$plotTime[2],
+                                    extent=input$plotExtent_bounds)
+    print(head(plotData))
+    
+    output$dataPlot=renderPlot(
+      if(nrow(plotData)>1){
+        plot(plotData$value~plotData$datetime)
+      }
+    )
+    
   })
+  
+  
+  
+  
 }
 
 # Run the application 
