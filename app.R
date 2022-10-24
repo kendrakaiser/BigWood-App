@@ -60,11 +60,11 @@ ui <- fluidPage(
                # Show a plot of the generated distribution
                mainPanel(
                  br(), br(),
-                 plotOutput("big_vols"),
+                 plotOutput("big_vols", width = "80%"),
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(), br(),
-                 plotOutput("sc_vols"),
+                 plotOutput("sc_vols", width = "30%"),
                  p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow')
                  ))),
     
