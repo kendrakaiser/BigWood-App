@@ -17,7 +17,7 @@ source('functions.r')
 
 conn=scdbConnect()
 end_date <<-as.Date("2022-08-01") # this will be changed to using the sys.date after testing
-
+ww<-getwd()
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   tabsetPanel(
@@ -60,11 +60,11 @@ ui <- fluidPage(
                # Show a plot of the generated distribution
                mainPanel(
                  br(), br(),
-                 renderPlot(readRDS("sampled_volumes.rds")),
+                 plotOutput("big_vols"),
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(), br(),
-                 renderPlot(file.path(paste0("sampled_sc_vol-", end_date, ".RData"))),
+                 plotOutput("sc_vols"),
                  p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow')
                  ))),
     
@@ -93,6 +93,9 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
+  output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
+  output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
+  
   # generate plot from the input variable and date range
   output$varPlot<- renderPlot({
     usemetric = dbGetQuery(conn,"SELECT name FROM metrics WHERE name = 'Dissolved Oxygen';") #input$variable - make sure this output works in the query
