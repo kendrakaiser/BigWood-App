@@ -55,17 +55,23 @@ ui <- fluidPage(
                    in the Big Wood River Basin (above Magic), Camas Creek and Silver Creek.', style = "font-size:1.5vh"),
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
+                 tags$img(class = 'image', height="98%", width="98%", src="hist_explanation.eps", align = "center", style="border:30px solid white"),
+                 p('Streamflow forecasts are shown as boxplots in omparison to the range of historical conditions. The exceedance probabilities align with the Northwest River Forecasting Center probabilities for comparison. The median forecasted streamflow volume for each gage and the exceednace probabilities are shown in the table.')
                  ),
                
                # Show a plot of the generated distribution
                mainPanel(
+                 br(), br(),
+                 p('Streamflow Forecast for', print(Sys.Date())), #check to make sure this works, or alt way??
+                 tableOutput("forecasted_vols"), 
+                 p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(), br(),
                  plotOutput("big_vols", width = "80%"),
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(), br(),
                  plotOutput("sc_vols", width = "30%"),
-                 p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow')
+                 p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow'),
                  ))),
     
     tabPanel("Water Quality Data Explorer",
@@ -95,7 +101,7 @@ server <- function(input, output) {
 
   output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
   output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
-  
+  output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"))
   # generate plot from the input variable and date range
   output$varPlot<- renderPlot({
     usemetric = dbGetQuery(conn,"SELECT name FROM metrics WHERE name = 'Dissolved Oxygen';") #input$variable - make sure this output works in the query
