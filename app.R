@@ -55,7 +55,7 @@ ui <- fluidPage(
                    in the Big Wood River Basin (above Magic), Camas Creek and Silver Creek.', style = "font-size:1.5vh"),
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
-                 tags$img(class = 'image', height="98%", width="98%", src="hist_explanation.eps", align = "center", style="border:30px solid white"),
+                 img(class = 'image', height="75%", width="75%", src="hist_explanation.eps", align = "center", style="border:10px solid white"),
                  p('Streamflow forecasts are shown as boxplots in omparison to the range of historical conditions. The exceedance probabilities align with the Northwest River Forecasting Center probabilities for comparison. The median forecasted streamflow volume for each gage and the exceednace probabilities are shown in the table.')
                  ),
                
@@ -101,7 +101,7 @@ server <- function(input, output) {
 
   output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
   output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
-  output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"))
+  output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"), digits = 0)
   # generate plot from the input variable and date range
   output$varPlot<- renderPlot({
     usemetric = dbGetQuery(conn,"SELECT name FROM metrics WHERE name = 'Dissolved Oxygen';") #input$variable - make sure this output works in the query
