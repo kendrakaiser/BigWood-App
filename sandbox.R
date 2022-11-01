@@ -32,13 +32,3 @@ p<-ggplot(useData, aes(x=site, y=value/1000, fill=isprediction), alpha=0.6) +
   xlab("")+
   ylab("Irrigation Season Volume (KAF)") +
   theme_bw()
-
-
-#list icons:
-file_text <- readr::read_file(
-  paste0(.libPaths()[1], 
-         "/leaflet/htmlwidgets/plugins/Leaflet.awesome-markers/font-awesome.min.css")
-)
-
-iconList=data.frame(iconName <- stringr::str_extract_all(file_text, "(fa-)([^:]+)")[[1]])
-
