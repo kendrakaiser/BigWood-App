@@ -1,0 +1,13 @@
+name: BigWood-App
+title: BigWood-App
+username:
+account: carlsonworks
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6908911
+bundleId: 6388885
+url: https://carlsonworks.shinyapps.io/BigWood-App/
+when: 1665431601.05636
+lastSyncTime: 1665431601.05636
+asMultiple: FALSE
+asStatic: FALSE
