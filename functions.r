@@ -16,10 +16,8 @@ conn=scdbConnect()
 #minDateTime=as.Date(dbGetQuery(conn,"SELECT MIN (datetime) FROM data;")$min)
 #maxDateTime=as.Date(dbGetQuery(conn,"SELECT MAX (datetime) FROM data;")$max)
 
-minDateTime=as.Date("2000-01-01")
+minDateTime=as.Date("1911-01-01")
 maxDateTime=Sys.Date()
-
-
 
 #dbGetQuery(conn,"SELECT DISTINCT ST_SRID(geometry) FROM locations;")$st_srid
 #dbGetQuery(conn,"SELECT DISTINCT name FROM metrics;")
@@ -37,7 +35,6 @@ getDataByVarTimeExtent=function(useVars,startDateTime,endDateTime,extent){
   #this is stupid, but...
   extBox=st_cast(extBox,'LINESTRING',flatten=T)
   
-  #p=print(extBox[[1]])
   
   
   query=paste0("SELECT data.metric, data.value, data.datetime, data.locationid FROM data ",
@@ -48,6 +45,8 @@ getDataByVarTimeExtent=function(useVars,startDateTime,endDateTime,extent){
                "AND data.datetime > '",startDateTime,
                "' AND data.datetime < '",endDateTime,"';")
   
+  print(query)
+  
   thisData=dbGetQuery(conn,query)
   
   print(format(object.size(thisData),units="MB"))
@@ -56,11 +55,70 @@ getDataByVarTimeExtent=function(useVars,startDateTime,endDateTime,extent){
 }
 
 
-defaultData=getDataByVarTimeExtent(useVars=c("Dissolved Oxygen"),
-                                   startDateTime="2021-06-01",
-                                   endDateTime="2021-08-01",
-                                   extent=list(north=43.33,east=-114.14,south=43.29,west=-114.16))
+getLocationsForVariables=function(useVars,startDate=as.Date("2021-03-01"),endDate=as.Date("2021-11-01")){
+  if(length(useVars)>=1){
+    
+    locationQuery=paste0("SELECT DISTINCT locations.locationid, locations.name, locations.sitenote, locations.geometry, data.metric ",
+                         "FROM locations LEFT JOIN data ON locations.locationid = data.locationid WHERE data.metric IN ('",
+                         paste0(useVars,collapse="', '"),"')",
+                         "AND data.datetime > '",startDate,
+                         "' AND data.datetime < '",endDate,"';")
+    
+    print(locationQuery)
+    locations=st_read(conn,query = locationQuery)
+    
+    if(nrow(locations)>=1){
+    
+    locations$rep=1:nrow(locations)
+    locations$iconName=paste0(locations$metric," ",locations$rep)
+    
+    return(st_transform(locations,st_crs(4326)))
+    } else return(NULL)
+  } else return(NULL)
+  
+}
 
-plotData=defaultData
 
-#plot(defaultData$value~defaultData$datetime)
+
+
+buildIcon=function(metric="",rep=1){
+  thisIcon="beer"
+  if(metric == "Water Temperature"){
+    thisIcon="thermometer"
+  }
+  if(metric == "Dissolved Oxygen"){
+    thisIcon="cloud"
+  }
+  if(metric == "flow"){
+    thisIcon="bathtub"
+  }
+  
+  rep=rep %% 11
+  colorOrder=c("red", "orange", "green", "blue", "purple", "pink", "gray", "cadetblue", "lightgreen", "lightred", "lightblue")
+  thisColor=colorOrder[rep]
+  
+  return( makeAwesomeIcon(icon=thisIcon,markerColor = thisColor,library = "fa",iconColor = "black") )
+}
+
+
+getAllIcons=function(locationDF){
+  allIcons=eval(
+    parse(
+      text=paste0("awesomeIconList(",
+                  paste0("'",locationDF$iconName,"' = buildIcon('",locationDF$metric,"', ",locationDF$rep,")",collapse=", "),
+                  ")")
+    )
+  ) 
+  return(allIcons)
+}
+
+
+#the following should add minview and maxview args to daterange, but has a broken dependency
+# dateRangeInput2 <- function(inputId, label, minview = "days", maxview = "decades", ...) {
+#   d <- shiny::dateRangeInput(inputId, label, ...)
+#   d$children[[2L]]$children[[1]]$attribs[["data-date-min-view-mode"]] <- minview
+#   d$children[[2L]]$children[[3]]$attribs[["data-date-min-view-mode"]] <- minview
+#   d$children[[2L]]$children[[1]]$attribs[["data-date-max-view-mode"]] <- maxview
+#   d$children[[2L]]$children[[3]]$attribs[["data-date-max-view-mode"]] <- maxview
+#   d
+# }
