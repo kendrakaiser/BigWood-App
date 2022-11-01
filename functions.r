@@ -1,5 +1,3 @@
-library(sf)
-
 scdbConnect=function(){
   conn=dbConnect(RPostgres::Postgres(),
                  host="silvercreekdb-do-user-12108041-0.b.db.ondigitalocean.com",
