@@ -12,6 +12,8 @@ library(DBI)
 library(ggplot2)
 library(stringr)
 library(leaflet)
+library(sf)
+
 library(shinyWidgets)
 source('functions.r')
 
