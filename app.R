@@ -61,8 +61,8 @@ ui <- fluidPage(
                  br(), div(class = "intro-divider3"), br(),
                  img(class = 'image', height="75%", width="75%", src="hist_explanation.eps", align = "center", style="border:10px solid white"),
                  p('Streamflow forecasts are shown as boxplots in omparison to the range of historical conditions. The exceedance probabilities align with the Northwest River Forecasting Center probabilities for comparison. The median forecasted streamflow volume for each gage and the exceednace probabilities are shown in the table.')
-                 ),
                ),
+               
                
                # Show a plot of the generated distribution
                mainPanel(
@@ -77,7 +77,8 @@ ui <- fluidPage(
                  br(), br(),
                  plotOutput("sc_vols", width = "30%"),
                  p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow'),
-                 ))),
+               ))
+    ),
     
     tabPanel("Water Quality Data Explorer",
              
@@ -123,11 +124,12 @@ ui <- fluidPage(
              )
     )
   )
+)
 
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-
+  
   output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
   output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
   output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"), digits = 0)
@@ -146,7 +148,7 @@ server <- function(input, output) {
     
     #ggplot(useData)
   })
-
+  
   #this will all go in the ui side for user to select timescale (stream flow model output will be static though)
   useLocations=dbGetQuery(conn, "SELECT locationid, name FROM locations WHERE locations.name IN ('BIG WOOD RIVER AT HAILEY', 'BIG WOOD RIVER AT STANTON CROSSING', 'CAMAS CREEK NR BLAINE ID' );")
   useMetrics=dbGetQuery(conn, "SELECT metricid, name, isprediction FROM metrics WHERE metrics.name IN ('irrigation season volume (april 1 - september 31)', 'simulated irrigation season volume (april 1 - september 31)');")
@@ -185,7 +187,7 @@ server <- function(input, output) {
       theme(axis.text=element_text(size=15), axis.title = element_text(size = 20))
   })
   
-
+  
   #map for defining data viz extent
   
   dataExtentMap = leaflet( leafletOptions(leafletCRS(crsClass="L.CRS.EPSG4326")) )
@@ -196,7 +198,7 @@ server <- function(input, output) {
                               layers=0,
                               attribution = 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>',
                               tileOptions(zIndex=1))
-
+  
   output$plotExtent = renderLeaflet(dataExtentMap)
   
   
@@ -225,7 +227,7 @@ server <- function(input, output) {
                                             endDate=input$plotDateRange[2])
     
     if(!is.null(locationPoints)){
- 
+      
       
       allIcons=getAllIcons(locationDF=locationPoints)
       leafletProxy("plotExtent") %>% 

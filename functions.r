@@ -52,6 +52,16 @@ getDataByVarTimeExtent=function(useVars,startDateTime,endDateTime,extent){
   return(thisData)
 }
 
+addRepFromLocationIDs=function(df,maxReps=11){
+  
+  locationIDs=unique(df$locationid)
+  locationsToReps=data.frame(locations=locationIDs[order(locationIDs)])
+  locationsToReps$rep=1:nrow(locationsToReps)
+  locationsToReps$rep=locationsToReps$rep %% 11
+  df=merge(df,locationsToReps,by.x="locationid",by.y="locations",all.x=T)
+  return(df)
+}
+
 
 getLocationsForVariables=function(useVars,startDate=as.Date("2021-03-01"),endDate=as.Date("2021-11-01")){
   if(length(useVars)>=1){
@@ -66,11 +76,12 @@ getLocationsForVariables=function(useVars,startDate=as.Date("2021-03-01"),endDat
     locations=st_read(conn,query = locationQuery)
     
     if(nrow(locations)>=1){
-    
-    locations$rep=1:nrow(locations)
-    locations$iconName=paste0(locations$metric," ",locations$rep)
-    
-    return(st_transform(locations,st_crs(4326)))
+      
+      locations=addRepFromLocationIDs(locations)
+      
+      locations$iconName=paste0(locations$metric," ",locations$seq)
+      
+      return(st_transform(locations,st_crs(4326)))
     } else return(NULL)
   } else return(NULL)
   
@@ -79,7 +90,7 @@ getLocationsForVariables=function(useVars,startDate=as.Date("2021-03-01"),endDat
 
 
 
-buildIcon=function(metric="",rep=1){
+buildIcon=function(metric="",rep=1,colorOrder=globalColorOrder){
   thisIcon="beer"
   if(metric == "Water Temperature"){
     thisIcon="thermometer"
@@ -91,8 +102,8 @@ buildIcon=function(metric="",rep=1){
     thisIcon="bathtub"
   }
   
-  rep=rep %% 11
-  colorOrder=c("red", "orange", "green", "blue", "purple", "pink", "gray", "cadetblue", "lightgreen", "lightred", "lightblue")
+  #rep=rep %% 11
+  #colorOrder=c("red", "orange", "green", "blue", "purple", "pink", "gray", "cadetblue", "lightgreen", "lightred", "lightblue")
   thisColor=colorOrder[rep]
   
   return( makeAwesomeIcon(icon=thisIcon,markerColor = thisColor,library = "fa",iconColor = "black") )
@@ -100,6 +111,7 @@ buildIcon=function(metric="",rep=1){
 
 
 getAllIcons=function(locationDF){
+  locationDF=addRepFromLocationIDs(locationDF)
   allIcons=eval(
     parse(
       text=paste0("awesomeIconList(",
@@ -110,6 +122,7 @@ getAllIcons=function(locationDF){
   return(allIcons)
 }
 
+globalColorOrder=c("red", "orange", "green", "blue", "purple", "pink", "gray", "cadetblue", "lightgreen", "lightred", "lightblue")
 
 #the following should add minview and maxview args to daterange, but has a broken dependency
 # dateRangeInput2 <- function(inputId, label, minview = "days", maxview = "decades", ...) {

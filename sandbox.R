@@ -42,3 +42,26 @@ file_text <- readr::read_file(
 
 iconList=data.frame(iconName <- stringr::str_extract_all(file_text, "(fa-)([^:]+)")[[1]])
 
+
+
+plotAll=function(plotData=dbGetQuery(conn,"SELECT data.metric, data.value, data.datetime, data.locationid FROM data INNER JOIN locations ON data.locationid = locations.locationid WHERE data.metric IN ('Water Temperature', 'Dissolved Oxygen', 'flow') AND ST_Within(locations.geometry, ST_Polygon('LINESTRING (734457.9 4797348, 727968.2 4797127, 727687.9 4805448, 734169.6 4805669, 734457.9 4797348)'::geometry, 26911) ) AND data.datetime > '2021-03-01' AND data.datetime < '2021-11-01';")){
+  
+  plotData=addRepFromLocationIDs(plotData)
+  
+  xmin=min(plotData$datetime)
+  xmax=max(plotData$datetime)
+  metrics=unique(plotData$metric)
+  #set up plot area:
+  firstLine=plotData[plotData$metric==metrics[1],]
+  firstLine=firstLine[firstLine$locationid==firstLine$locationid[1],]
+  leftMargin=3*length(metrics)
+  
+  par(mar=c(5.1,leftMargin,4.1,2.1))
+  plot(firstLine$value~firstLine$datetime,type="n",xlim=c(xmin,xmax),yaxt="n",ylab="",xlab="Date")
+  
+  for(metric in metrics){
+  
+    
+    #sort by date  
+  }
+}
