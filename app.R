@@ -99,8 +99,8 @@ ui <- fluidPage(
                  dateRangeInput(
                    inputId="plotDateRange",
                    label=NULL,
-                   start=as.Date("2021-03-01"),
-                   end=as.Date("2021-11-01"),
+                   start=as.Date("2021-06-01"),
+                   end=as.Date("2021-07-01"),
                    min=minDateTime,
                    max=maxDateTime,
                    format="M-yyyy",
@@ -117,7 +117,7 @@ ui <- fluidPage(
                
                
                mainPanel( 
-                 plotOutput("dataPlot")
+                 plotOutput("dataPlot",height="500px")
                  
                  
                )
@@ -133,21 +133,7 @@ server <- function(input, output) {
   output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
   output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
   output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"), digits = 0)
-  # generate plot from the input variable and date range
-  output$varPlot<- renderPlot({
-    usemetric = dbGetQuery(conn,"SELECT name FROM metrics WHERE name = 'Dissolved Oxygen';") #input$variable - make sure this output works in the query
-    #input$year -- this is actually a date range right now
-    #uselocations - I would hard code this for a given DO site for now or just plot data from all DO sensors-- we prob wont want the full list of locations in a drop down?
-    
-    #query=paste0("SELECT metric, value, locationid, simnumber FROM data WHERE data.metricid IN ('",
-    #            paste0(usemetric$metricid,collapse="', '"),
-    #           "') AND data.locationid IN ('",
-    #          paste0(useLocations$locationid,collapse="', '"),"');")
-    
-    #useData=dbGetQuery(conn,query)
-    
-    #ggplot(useData)
-  })
+ 
   
   #this will all go in the ui side for user to select timescale (stream flow model output will be static though)
   useLocations=dbGetQuery(conn, "SELECT locationid, name FROM locations WHERE locations.name IN ('BIG WOOD RIVER AT HAILEY', 'BIG WOOD RIVER AT STANTON CROSSING', 'CAMAS CREEK NR BLAINE ID' );")
@@ -213,7 +199,8 @@ server <- function(input, output) {
     
     output$dataPlot=renderPlot(
       if(nrow(plotData)>1){
-        plot(plotData$value~plotData$datetime)
+        #plot(plotData$value~plotData$datetime)
+        plotAll(plotData)
       }
     )
     
@@ -230,6 +217,8 @@ server <- function(input, output) {
       
       
       allIcons=getAllIcons(locationDF=locationPoints)
+      #print(allIcons)
+      #print(head(locationPoints))
       leafletProxy("plotExtent") %>% 
         clearGroup("dataLocationPoints") %>%
         addAwesomeMarkers(
