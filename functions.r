@@ -1,10 +1,17 @@
 scdbConnect=function(){
   conn=dbConnect(RPostgres::Postgres(),
+                 # host="silvercreekdb-do-user-12108041-0.b.db.ondigitalocean.com",
+                 # port="25060",
+                 # dbname="silvercreekdb" ,
+                 # user="dbread",
+                 # password="dbread"
+                 
                  host="silvercreekdb-do-user-12108041-0.b.db.ondigitalocean.com",
-                 port="25060",
-                 dbname="silvercreekdb" ,
+                 port="25061",
+                 dbname="shinyPool" ,
                  user="dbread",
                  password="dbread"
+                 
   )
   return(conn)
 }
@@ -172,10 +179,32 @@ plotAll=function(plotData=dbGetQuery(conn,"SELECT data.metric, data.value, data.
   par(new=T)
   par(mar=c(.1,2,2,2))
   plot.new()
-
+  
   legend(x="bottom",legend=rev(metrics),lty=rev(metricLty),lwd=2,ncol=2,bty="n")
 }
 
+getAirTempsByDate=function(tf_date, airTempReferenceLocation=180){
+  doy=format.Date(tf_date,format="%j")
+  airTempHighs=dbGetQuery(conn, paste0("SELECT max(value) AS high FROM data WHERE locationid = '",airTempReferenceLocation,"' 
+                          AND metric = 'air temperature' 
+                          AND DATE_PART('doy',datetime) = '",doy,"'
+                          AND qcstatus='T'
+                             GROUP BY datetime::date;"))$high
+  #exclude occasional unreasonable values:
+  airTempHighs=airTempHighs[airTempHighs>0]
+  airTempHighs=airTempHighs[airTempHighs<120] #climate change compatable????
+  return(airTempHighs)
+}
+
+getIndexFlowsByDate=function(tf_date, indexFlowLocation=144){
+  doy=format.Date(tf_date,format="%j")
+  indexFlows=dbGetQuery(conn, paste0("SELECT avg(value) AS flow FROM data WHERE locationid = '",indexFlowLocation,"' 
+                          AND metric = 'flow' 
+                          AND DATE_PART('doy',datetime) = '",doy,"'
+                          AND qcstatus = 'T'
+                             GROUP BY datetime::date;"))$flow
+  return(indexFlows)
+}
 
 #the following should add minview and maxview args to daterange, but has a broken dependency
 # dateRangeInput2 <- function(inputId, label, minview = "days", maxview = "decades", ...) {

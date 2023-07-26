@@ -27,7 +27,7 @@ ui <- fluidPage(
   tabsetPanel(
     
     # Landing Page
-    tabPanel("Big Wood River Streamflow and Water Quality Dashboard",
+    tabPanel("Overview",
              tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
                        tags$meta(name="viewport", content="initial-scale=1")),
              setBackgroundColor("white"), 
@@ -80,7 +80,62 @@ ui <- fluidPage(
                ))
     ),
     
-    tabPanel("Water Quality Data Explorer",
+    tabPanel("Stream Temperature Forecasts",
+             sidebarLayout(
+               sidebarPanel(
+                 h4("Input Parameters"),
+                 h5("Time of Year"),
+                 h6("Time of year is used to identify historical distributions of air temperature and streamflow values, and to determine day length for use in the forecasting process.  Set the time of year below:"),
+                 sliderInput(inputId = "tf_date",
+                             label=NULL,
+                             value=as.Date("2000-07-01"),
+                             min=as.Date("2000-05-01"),
+                             max=as.Date("2000-10-30"),
+                             timeFormat="%m/%d"),
+                 
+                 
+                 h5("Air Temperature"),
+                 h6(textOutput('tf_airTempDisplay')),
+                 fluidRow(align="center",
+                          plotOutput('airTempHighsHist', height="80px",width="100%"),
+                          # uiOutput("tf_maxAirTempSlider")
+                          sliderInput(inputId = "tf_maxAirTemp",
+                                      label=NULL,
+                                      value=80,
+                                      min=40,
+                                      max=110,
+                                      ticks=FALSE,
+                                      width="99%"
+                          )
+                 ),
+                 
+                 h5("Streamflow"),
+                 h6(textOutput("tf_flowDisplay")),
+                 
+                 fluidRow(align="center",
+                          plotOutput('flowForecastHist', height="80px",width="100%"),   
+                          sliderInput(inputId = "tf_indexFlow",
+                                      label=NULL,
+                                      value=100,
+                                      min=20,
+                                      max=200,
+                                      ticks=FALSE,
+                                      width="100%"
+                          )
+                          
+                          
+                 )
+               ),
+               
+               mainPanel(
+                 
+                 
+               )
+               
+             )
+    ),
+    
+    tabPanel("Data Explorer",
              
              sidebarLayout(
                sidebarPanel(
@@ -133,7 +188,6 @@ server <- function(input, output) {
   output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
   output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
   output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"), digits = 0)
- 
   
   #this will all go in the ui side for user to select timescale (stream flow model output will be static though)
   useLocations=dbGetQuery(conn, "SELECT locationid, name FROM locations WHERE locations.name IN ('BIG WOOD RIVER AT HAILEY', 'BIG WOOD RIVER AT STANTON CROSSING', 'CAMAS CREEK NR BLAINE ID' );")
@@ -207,15 +261,10 @@ server <- function(input, output) {
   })
   
   observe({
-    
-    
     locationPoints=getLocationsForVariables(useVars=input$plotVars,
                                             startDate=input$plotDateRange[1],
                                             endDate=input$plotDateRange[2])
-    
     if(!is.null(locationPoints)){
-      
-      
       allIcons=getAllIcons(locationDF=locationPoints)
       #print(allIcons)
       #print(head(locationPoints))
@@ -231,9 +280,62 @@ server <- function(input, output) {
       leafletProxy("plotExtent") %>% 
         clearGroup("dataLocationPoints")
     }
-    
-    
+  })# end of observe for locationPoints
+  
+  
+  tf_airTemps=reactive({getAirTempsByDate(input$tf_date)})
+  
+  output$tf_airTempDisplay=renderText({paste0("The average high air temperature at the Picabo AgriMet station for ",
+                                              format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," is ",round(mean(tf_airTemps()),1),
+                                              "°F, and the distribution of observed daily high temperatures for this date are shown in the plot below.  Use the slider beneath this plot to set the air temperature for the simulation:")
   })
+  
+  output$airTempHighsHist=renderPlot({
+    
+    tf_airT_DisplayMin=round(min(tf_airTemps()-10),digits=0)
+    tf_airT_DisplayMax=round(max(tf_airTemps()+10),digits=0)
+    #side effects on sliderInput
+    updateSliderInput(inputId = "tf_maxAirTemp",min=tf_airT_DisplayMin,max=tf_airT_DisplayMax)
+    
+    par(bg="transparent")
+    par(oma=c(0,0,0,0))
+    par(mar=c(2,0,0,0))
+    hist(x=tf_airTemps(),
+         xlim=c(tf_airT_DisplayMin, tf_airT_DisplayMax),
+         xlab=NULL,ylab=NULL,
+         axes=F,
+         breaks=seq(from=0,to=120,by=2.5),
+         main=NULL
+    )
+    axis(side=1)
+  })
+  
+  tf_indexFlows=reactive({getIndexFlowsByDate(input$tf_date)})
+  
+  output$tf_flowDisplay=renderText({paste0("The state of streamflow in Silver Creek is described in terms of the flow at the Sportsmans Gauge.  The average streamflow at Sportsmans for ",
+                                           format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," is ",round(mean(tf_indexFlows()),1)," cfs, and the distribution of observed streamflows for this date are shown in the plot below.  Use the slider beneath this plot to set the streamflow for the simulation:")
+  })
+  
+  output$flowForecastHist=renderPlot({
+    minForecastFlow=round(min(tf_indexFlows())*.5,digits=0)
+    maxForecastFlow=round(max(tf_indexFlows())*1.25,digits=-1)
+    
+    updateSliderInput(inputId = "tf_indexFlow",min=minForecastFlow,max=maxForecastFlow)
+    
+    par(bg="transparent")
+    par(oma=c(0,0,0,0))
+    par(mar=c(2,0,0,0))
+    hist(x=tf_indexFlows(),
+         xlim=c(minForecastFlow, maxForecastFlow),
+         xlab=NULL,ylab=NULL,
+         axes=F,
+         breaks=seq(from=0,to=500,by=10),
+         main=NULL
+    )
+    axis(side=1)
+  })
+  
+  
   
   
   
