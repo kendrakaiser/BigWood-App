@@ -183,17 +183,26 @@ plotAll=function(plotData=dbGetQuery(conn,"SELECT data.metric, data.value, data.
   legend(x="bottom",legend=rev(metrics),lty=rev(metricLty),lwd=2,ncol=2,bty="n")
 }
 
-getAirTempsByDate=function(tf_date, airTempReferenceLocation=180){
+getAirTempsByDate=function(tf_date,high=F, airTempReferenceLocation=180){
   doy=format.Date(tf_date,format="%j")
-  airTempHighs=dbGetQuery(conn, paste0("SELECT max(value) AS high FROM data WHERE locationid = '",airTempReferenceLocation,"' 
-                          AND metric = 'air temperature' 
+  if(high){
+    airTemps=dbGetQuery(conn, paste0("SELECT max(value) AS high FROM data WHERE locationid = '",airTempReferenceLocation,"'
+                          AND metric = 'air temperature'
                           AND DATE_PART('doy',datetime) = '",doy,"'
                           AND qcstatus='T'
                              GROUP BY datetime::date;"))$high
+  } else {
+    airTemps=dbGetQuery(conn, paste0("SELECT avg(value) AS avg FROM data WHERE locationid = '",airTempReferenceLocation,"' 
+                          AND metric = 'air temperature' 
+                          AND DATE_PART('doy',datetime) = '",doy,"'
+                          AND qcstatus='T'
+                             GROUP BY datetime::date;"))$avg
+  }
+  
   #exclude occasional unreasonable values:
-  airTempHighs=airTempHighs[airTempHighs>0]
-  airTempHighs=airTempHighs[airTempHighs<120] #climate change compatable????
-  return(airTempHighs)
+  airTemps=airTemps[airTemps>0]
+  airTemps=airTemps[airTemps<120] #climate change compatable????
+  return(airTemps)
 }
 
 getIndexFlowsByDate=function(tf_date, indexFlowLocation=144){
@@ -205,6 +214,59 @@ getIndexFlowsByDate=function(tf_date, indexFlowLocation=144){
                              GROUP BY datetime::date;"))$flow
   return(indexFlows)
 }
+
+# getTemperatureModel=function(){
+#   temperatureModel=readRDS("/home/sam/Documents/R Workspace/SilverCreekQualityModel/temperatureModel.rds")
+#   return(temperatureModel)
+# }
+#saveRDS(getTemperatureModel(),paste0(getwd(),"/www/temperatureModel.rds"))
+
+
+getTemperatureColor=colorNumeric( palette=viridis::turbo(60), domain = c(49, 75), na.color = "#7A0403")
+
+
+predictSegTemperatures=function(indexFlow, meanAirTemp_F, forecastDate, streamSegs, tempModel=temperatureModel){
+  maxSunAngleFun=function(doy){
+    43+23.45*sin((2*pi/360)*(360/365)*(doy-81))
+  }
+  
+  
+  
+  
+  meanAirTemp = 5/9*(meanAirTemp_F - 32)
+
+  forecastDate=as.Date(forecastDate)
+  forecastDOY=as.numeric(format.Date(forecastDate, "%j"))
+  
+  segTemperatures=dbGetQuery(conn,paste0("SELECT specificresidencetoseg AS sr, meanresidencetoseg AS residence, flow, segid FROM residences WHERE indexflow = '",indexFlow,"';"))
+  names(segTemperatures)[names(segTemperatures)=="sr"] = "sR"
+  
+  segTemperatures=merge(streamSegs, segTemperatures, by="segid")
+  segTemperatures$maxSunElevation=maxSunAngleFun(forecastDOY)
+  #segTemperatures$maxAirTemp=maxAirTemp
+  segTemperatures$meanAirTemp=meanAirTemp
+  segTemperatures$indexFlow=indexFlow
+  #  print(names(segTemperatures))
+  
+  segTemperatures$temperature_F=( predict(tempModel,newdata=segTemperatures) * (9/5) ) + 32 
+  
+  
+  #segTemperatures$temperature_F=  as.numeric( ( predict(tempModel,newdata=segTemperatures) * (9/5) ) + 32 )
+  
+  #print(max(segTemperatures$temperature_F))
+  
+  
+  segTemperatures$color=getTemperatureColor(c(segTemperatures$temperature_F))
+  
+  segTemperatures=st_transform(segTemperatures,4326)
+  
+  return(segTemperatures)
+  
+}
+
+
+
+
 
 #the following should add minview and maxview args to daterange, but has a broken dependency
 # dateRangeInput2 <- function(inputId, label, minview = "days", maxview = "decades", ...) {

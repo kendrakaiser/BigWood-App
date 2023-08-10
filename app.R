@@ -3,8 +3,9 @@
 # the 'Run App' button above.
 #
 # Find out more about building applications with Shiny here:
-# Sys.setenv(scdb_readPass="dbread")
 #    http://shiny.rstudio.com/
+# Sys.setenv(scdb_readPass="")
+
 
 library(shiny)
 library(RPostgres)
@@ -96,18 +97,18 @@ ui <- fluidPage(
                  
                  h5("Air Temperature"),
                  h6(textOutput('tf_airTempDisplay')),
-                 fluidRow(align="center",
-                          plotOutput('airTempHighsHist', height="80px",width="100%"),
-                          # uiOutput("tf_maxAirTempSlider")
-                          sliderInput(inputId = "tf_maxAirTemp",
-                                      label=NULL,
-                                      value=80,
-                                      min=40,
-                                      max=110,
-                                      ticks=FALSE,
-                                      width="99%"
-                          )
-                 ),
+                 # fluidRow(align="center",
+                 #          plotOutput('airTempHighsHist', height="80px",width="100%"),
+                 #          # uiOutput("tf_maxAirTempSlider")
+                 #          sliderInput(inputId = "tf_maxAirTemp",
+                 #                      label=NULL,
+                 #                      value=80,
+                 #                      min=40,
+                 #                      max=110,
+                 #                      ticks=FALSE,
+                 #                      width="99%"
+                 #          )
+                 # ),
                  
                  h5("Streamflow"),
                  h6(textOutput("tf_flowDisplay")),
@@ -124,11 +125,12 @@ ui <- fluidPage(
                           )
                           
                           
-                 )
+                 ),
+                 actionButton("mapTemperature","Forecast Stream Temperatures")
                ),
                
                mainPanel(
-                 
+                 leafletOutput("temperatureMap",height="500px")
                  
                )
                
@@ -227,7 +229,7 @@ server <- function(input, output) {
       theme(axis.text=element_text(size=15), axis.title = element_text(size = 20))
   })
   
-  
+  ############### data explorer ---------
   #map for defining data viz extent
   
   dataExtentMap = leaflet( leafletOptions(leafletCRS(crsClass="L.CRS.EPSG4326")) )
@@ -283,42 +285,49 @@ server <- function(input, output) {
   })# end of observe for locationPoints
   
   
+  ############# temperature forecasting tool -----------
+  temperatureModel=readRDS(paste0(getwd(),"/www/temperatureModel.rds"))
+  
   tf_airTemps=reactive({getAirTempsByDate(input$tf_date)})
+  tf_maxAirTemps=reactive({getAirTempsByDate(input$tf_date,high=T)})
   
-  output$tf_airTempDisplay=renderText({paste0("The average high air temperature at the Picabo AgriMet station for ",
-                                              format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," is ",round(mean(tf_airTemps()),1),
-                                              "°F, and the distribution of observed daily high temperatures for this date are shown in the plot below.  Use the slider beneath this plot to set the air temperature for the simulation:")
+  output$tf_airTempDisplay=renderText({paste0("Daily average average air temperatures at the Picabo AgriMet station for ",
+                                              format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," range from ",
+                                              round(min(tf_airTemps())),"°F to ", round(max(tf_airTemps())),"°F.  Highs for this day range from ",
+                                              round(min(tf_maxAirTemps())),"°F to ",round(max(tf_maxAirTemps())),"°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
+                                              round(quantile(tf_airTemps(),.9)),"°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"°F.")
   })
   
-  output$airTempHighsHist=renderPlot({
-    
-    tf_airT_DisplayMin=round(min(tf_airTemps()-10),digits=0)
-    tf_airT_DisplayMax=round(max(tf_airTemps()+10),digits=0)
-    #side effects on sliderInput
-    updateSliderInput(inputId = "tf_maxAirTemp",min=tf_airT_DisplayMin,max=tf_airT_DisplayMax)
-    
-    par(bg="transparent")
-    par(oma=c(0,0,0,0))
-    par(mar=c(2,0,0,0))
-    hist(x=tf_airTemps(),
-         xlim=c(tf_airT_DisplayMin, tf_airT_DisplayMax),
-         xlab=NULL,ylab=NULL,
-         axes=F,
-         breaks=seq(from=0,to=120,by=2.5),
-         main=NULL
-    )
-    axis(side=1)
-  })
+  # output$airTempHighsHist=renderPlot({
+  #   
+  #   tf_airT_DisplayMin=round(min(tf_airTemps()-10),digits=0)
+  #   tf_airT_DisplayMax=round(max(tf_airTemps()+10),digits=0)
+  #   #side effects on sliderInput
+  #   updateSliderInput(inputId = "tf_maxAirTemp",min=tf_airT_DisplayMin,max=tf_airT_DisplayMax)
+  #   
+  #   par(bg="transparent")
+  #   par(oma=c(0,0,0,0))
+  #   par(mar=c(2,0,0,0))
+  #   hist(x=tf_airTemps(),
+  #        xlim=c(tf_airT_DisplayMin, tf_airT_DisplayMax),
+  #        xlab=NULL,ylab=NULL,
+  #        axes=F,
+  #        breaks=seq(from=0,to=120,by=2.5),
+  #        main=NULL
+  #   )
+  #   axis(side=1)
+  # })
   
   tf_indexFlows=reactive({getIndexFlowsByDate(input$tf_date)})
   
   output$tf_flowDisplay=renderText({paste0("The state of streamflow in Silver Creek is described in terms of the flow at the Sportsmans Gauge.  The average streamflow at Sportsmans for ",
-                                           format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," is ",round(mean(tf_indexFlows()),1)," cfs, and the distribution of observed streamflows for this date are shown in the plot below.  Use the slider beneath this plot to set the streamflow for the simulation:")
+                                           format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," is ",round(mean(tf_indexFlows()),1)," cfs, and the historical distribution of streamflow for this day is shown in the plot below.  Use the slider beneath this plot to set the streamflow for the simulation:")
   })
   
   output$flowForecastHist=renderPlot({
     minForecastFlow=round(min(tf_indexFlows())*.5,digits=0)
     maxForecastFlow=round(max(tf_indexFlows())*1.25,digits=-1)
+    maxForecastFlow=min(maxForecastFlow,300)
     
     updateSliderInput(inputId = "tf_indexFlow",min=minForecastFlow,max=maxForecastFlow)
     
@@ -335,10 +344,44 @@ server <- function(input, output) {
     axis(side=1)
   })
   
+  #temperatures map
+  tf_indexFlow=reactive(input$tf_indexFlow)
+  tf_maxAirTemp=reactive(input$tf_maxAirTemp)
+  tf_date=reactive(input$tf_date)
+  
+  g=1
+  streamSegs= st_transform(st_read(conn,query="SELECT segid, geometry, length FROM streamsegments;"),4326)
+  streamSegs=streamSegs[!streamSegs$segid %in% c(1308, 1629),] #two short segs with inflated uaa (and therefore erronious flow) due to raster->vector issues
+  streamSegs$color=c("darkblue","blue")
+  
+  segTemperatures=reactive(predictSegTemperatures(indexFlow = tf_indexFlow(), meanAirTemp_F = round(quantile(tf_airTemps(),.9)), forecastDate=tf_date(), streamSegs=streamSegs, tempModel=temperatureModel) )
   
   
+  temperatureMap = leaflet( leafletOptions(leafletCRS(crsClass="L.CRS.EPSG4326")) )
+  
+  temperatureMap = setView(map=temperatureMap,lng=-114.13,lat=43.31,zoom=11)
+  
+  temperatureMap = addWMSTiles(map=temperatureMap,baseUrl="https://basemap.nationalmap.gov/arcgis/services/USGSImageryOnly/MapServer/WmsServer",
+                               layers=0,
+                               attribution = 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>',
+                               tileOptions(zIndex=1))
+  
+  temperatureMap=addPolylines(map=temperatureMap,data=isolate(segTemperatures()),color=isolate(segTemperatures())$color, label=round(isolate(segTemperatures())$temperature_F,1),opacity=1,group=paste0("g",g))
+
+  
+  temperatureMap=addLegend(map=temperatureMap,position="topright",pal=getTemperatureColor,values=50:75,opacity=1)
+  
+  output$temperatureMap = renderLeaflet(temperatureMap)
   
   
+  observeEvent(input$mapTemperature,{
+  
+    leafletProxy("temperatureMap", data=segTemperatures()) %>% 
+      addPolylines(label=round(segTemperatures()$temperature_F,1),color=segTemperatures()$color,opacity=1,group = paste0("g",g+1))
+      #clearGroup(paste0("g",g))  #add new layer first, then remove old one.  g is inhereted from parent environment and never sent back
+
+    
+  })
   
 }
 
