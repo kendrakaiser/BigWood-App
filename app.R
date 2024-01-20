@@ -1,12 +1,3 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#    http://shiny.rstudio.com/
-# Sys.setenv(scdb_readPass="")
-
-
 library(shiny)
 library(RPostgres)
 library(DBI)
@@ -18,7 +9,7 @@ library(sf)
 library(shinyWidgets)
 
 source('functions.r')
-
+loc_cd <- "C:/Users/stevenschmitz/Desktop/WRWC-master/figures/"
 conn=scdbConnect()
 
 end_date <<-as.Date("2022-08-01") # this will be changed to using the sys.date after testing
@@ -29,23 +20,47 @@ ui <- fluidPage(
     
     # Landing Page
     tabPanel("Overview",
-             tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
-                       tags$meta(name="viewport", content="initial-scale=1")),
-             setBackgroundColor("white"), 
-             splitLayout(cellWidths = c("45%", "55%"), cellArgs = list(style='white-space: normal;'),
-                         tags$img(class = 'image', height="98%", width="98%", src="silvercreekSquare.jpg", align = "left", style="border:30px solid white"), 
-                         tags$div(class = "text-block", # load CSS .text-block (style and positioning)
-                                  tags$h1("Big Wood River Streamflow and Water Quality Tools")), # Title
-                         tags$div(class="landing-block",
-                                  p(class="lp_text","The Big Wood River Dashboard is an interactive set of tool to visualize 
-                                observational data and modeling ouput in the Big Wood River Basin and Silver Creek."),
-                                  p(class='lp_text', "This integrates data from a range of sources and provides timely information that may be used
-                              to inform water management in the basin. Use the toolbar at the top of the page to select the data or information category of interest 
-                              and you’ll be directed to a dynamic graph for visualization."),
-                                  p(class="lp_text","The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. 
-                              The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. 
-                              The data explorer allows you to dig into the datasets behind these models, and explore changes over time."))
-             )),
+             tags$head(
+               tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
+               tags$meta(name = "viewport", content = "initial-scale=1")
+             ),
+             setBackgroundColor("white"),
+             fluidPage(
+               splitLayout(
+                 cellWidths = c("50%", "50%"),
+                 cellArgs = list(style = 'white-space: normal;'),
+                 tags$img(
+                   class = 'image',
+                   height = "98%",
+                   width = "98%",
+                   src = "silvercreekSquare.jpg",
+                   align = "left",
+                   style = "border: 10px solid #ECF0F1; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"
+                 ),
+                 tags$div(
+                   class = "text-block",
+                   style = "margin-top: -20px; background-color: transparent; box-shadow: 2px 4px 10px black; border-radius: 5px; padding: 5%; box-sizing: border-box;",
+                   tags$h1(
+                     "Big Wood River Streamflow and Water Quality Tools",
+                     style = "color: #2980B9; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.5vw; font-weight: bold; text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); background-color: transparent; border-radius: 5px; word-wrap: break-word; max-width: 100%;"
+                   )
+                 )
+                ),
+               tags$div(
+                 class = "landing-block",
+                 style = "font-size: 14px; text-align: center; margin-top: 20px; box-shadow: 2px 4px 10px black;",
+                 p(class = "lp_text", "The Big Wood River Dashboard is an interactive set of tools to visualize observational data and modeling output in the Big Wood River Basin and Silver Creek."),
+                 p(
+                   class = "lp_text",
+                   "This integrates data from a range of sources and provides timely information that may be used to inform water management in the basin. Use the toolbar at the top of the page to select the data or information category of interest, and you’ll be directed to a dynamic graph for visualization."
+                 ),
+                 p(
+                   class = "lp_text",
+                   "The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. The data explorer allows you to dig into the datasets behind these models and explore changes over time."
+                 )
+               )
+             )
+    ),
     
     # Streamflow Tools
     tabPanel("Streamflow Forecasts",
@@ -60,23 +75,31 @@ ui <- fluidPage(
                    in the Big Wood River Basin (above Magic), Camas Creek and Silver Creek.', style = "font-size:1.5vh"),
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
-                 img(class = 'image', height="75%", width="75%", src="hist_explanation.eps", align = "center", style="border:10px solid white"),
-                 p('Streamflow forecasts are shown as boxplots in omparison to the range of historical conditions. The exceedance probabilities align with the Northwest River Forecasting Center probabilities for comparison. The median forecasted streamflow volume for each gage and the exceednace probabilities are shown in the table.')
+                 img(class = 'image', height="75%", width="105%", src="hist_explanation.png", align = "center", style="margin-right: 30px; border:10px solid light grey"),
+                 p('Streamflow forecasts are shown as boxplots in omparison to the range of historical conditions. The exceedance probabilities align with the Northwest River Forecasting Center probabilities for comparison. The median forecasted streamflow volume for each gage and the exceednace probabilities are shown in the table.',
+                   style = "background-color: white; border: 1px solid black; padding: 5px")
                ),
                
                
                # Show a plot of the generated distribution
                mainPanel(
-                 br(), br(),
+                 br(),
                  p('Streamflow Forecast for', print(Sys.Date())), #check to make sure this works, or alt way??
                  tableOutput("forecasted_vols"), 
                  p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
-                 br(), br(),
-                 plotOutput("big_vols", width = "80%"),
+                 br(),
+                 #plotOutput("big_vols", width = "80%"),
+                 div(
+                   img(class = 'image', height = '60%', width = '60%', src = 'sampled_volumes1.png', 
+                     align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
+                   img(class = 'image', height = '60%', width = '60%', src = 'sampled_volumes1.png', 
+                     align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
+                   style = "display: flex; justify-content: space-between;"
+                 ),
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
-                 br(), br(),
-                 plotOutput("sc_vols", width = "30%"),
+                 br(),
+                 #plotOutput("sc_vols", width = "30%"),
                  p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow'),
                ))
     ),
@@ -293,9 +316,9 @@ server <- function(input, output) {
   
   output$tf_airTempDisplay=renderText({paste0("Daily average average air temperatures at the Picabo AgriMet station for ",
                                               format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," range from ",
-                                              round(min(tf_airTemps())),"°F to ", round(max(tf_airTemps())),"°F.  Highs for this day range from ",
-                                              round(min(tf_maxAirTemps())),"°F to ",round(max(tf_maxAirTemps())),"°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
-                                              round(quantile(tf_airTemps(),.9)),"°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"°F.")
+                                              round(min(tf_airTemps())),"Â°F to ", round(max(tf_airTemps())),"Â°F.  Highs for this day range from ",
+                                              round(min(tf_maxAirTemps())),"Â°F to ",round(max(tf_maxAirTemps())),"Â°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
+                                              round(quantile(tf_airTemps(),.9)),"Â°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"Â°F.")
   })
   
   # output$airTempHighsHist=renderPlot({
@@ -386,4 +409,5 @@ server <- function(input, output) {
 }
 
 # Run the application 
+shinyApp(ui = ui, server = server)
 shinyApp(ui = ui, server = server)
