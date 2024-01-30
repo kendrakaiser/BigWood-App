@@ -61,7 +61,7 @@ ui <- fluidPage(
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
                  img(class = 'image', height="75%", width="75%", src="hist_explanation.eps", align = "center", style="border:10px solid white"),
-                 p('Streamflow forecasts are shown as boxplots in omparison to the range of historical conditions. The exceedance probabilities align with the Northwest River Forecasting Center probabilities for comparison. The median forecasted streamflow volume for each gage and the exceednace probabilities are shown in the table.')
+                 p('Streamflow forecasts are shown as boxplots in comparison to the range of historical conditions. The exceedance probabilities align with the Northwest River Forecasting Center probabilities for comparison. The median forecasted streamflow volume for each gage and the exceednace probabilities are shown in the table.')
                ),
                
                
