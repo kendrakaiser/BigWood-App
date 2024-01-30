@@ -77,6 +77,7 @@ ui <- fluidPage(
                    in the Big Wood River Basin (above Magic), Camas Creek and Silver Creek.', style = "font-size:1.5vh"),
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
+
                  img(
                    class = 'image',
                    style = "max-width: 100%; height: auto; border: 10px solid light grey; margin-right: 30px;",
