@@ -52,7 +52,7 @@ combined_data_sccc <- data.frame(
   Value = c(sc_dat$stats, cc_dat$stats)
 )
 
-png(paste0(git_dir,"www/boxplot_big_wood.png"), width = 800, height = 600)
+png('boxplot_big_wood.png'), width = 800, height = 600)
 boxplot(Value ~ Group, data = combined_data_bw, # big wood stanton/haley box plot
         col = c("royalblue3", "grey90", "blue3", "deepskyblue", "green3", "darkorange", "red"),
         main = "Historic & Modeled Irrigation Season Volumes (April-Sept.)",
@@ -62,7 +62,7 @@ boxplot(Value ~ Group, data = combined_data_bw, # big wood stanton/haley box plo
 grid(lty = "dotted", col = "gray")
 dev.off()
 
-png(paste0(git_dir,"www/boxplot_sccc.png"), width = 800, height = 600)
+png('boxplot_sccc.png', width = 800, height = 600)
 boxplot(Value ~ Group, data = combined_data_sccc, # silver creek, camas creek box plot
         col = c("royalblue3", "grey90", "blue3", "deepskyblue", "green3", "darkorange", "red"),
         main = "Historic & Modeled Irrigation Season Volumes (April-Sept.)",
