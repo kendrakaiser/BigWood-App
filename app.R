@@ -1,3 +1,11 @@
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#    http://shiny.rstudio.com/
+# Sys.setenv(scdb_readPass="")
+
 library(shinythemes)
 library(shiny)
 library(RPostgres)
@@ -6,11 +14,10 @@ library(ggplot2)
 library(stringr)
 library(leaflet)
 library(sf)
-
 library(shinyWidgets)
 
 source('functions.r')
-loc_cd <- "C:/Users/stevenschmitz/Desktop/WRWC-master/figures/"
+source('plotter.R') 
 conn=scdbConnect()
 
 end_date <<-as.Date("2022-08-01") # this will be changed to using the sys.date after testing
@@ -77,7 +84,6 @@ ui <- fluidPage(
                    in the Big Wood River Basin (above Magic), Camas Creek and Silver Creek.', style = "font-size:1.5vh"),
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
-
                  img(
                    class = 'image',
                    style = "max-width: 100%; height: auto; border: 10px solid light grey; margin-right: 30px;",
@@ -100,7 +106,7 @@ ui <- fluidPage(
                  br(),
                  #plotOutput("big_vols", width = "80%"),
                  div(
-                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_volumes1.png', 
+                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_bw.png', 
                      align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
                      style = "display: flex; justify-content: space-between;"
                  ),
@@ -108,7 +114,9 @@ ui <- fluidPage(
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(),
                  div(
-                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_volumes1.png', 
+                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_cc.png', 
+                       align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
+                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_sc.png', 
                        align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
                    style = "display: flex; justify-content: space-between;"
                  ),
@@ -329,9 +337,9 @@ server <- function(input, output) {
   
   output$tf_airTempDisplay=renderText({paste0("Daily average average air temperatures at the Picabo AgriMet station for ",
                                               format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," range from ",
-                                              round(min(tf_airTemps())),"°F to ", round(max(tf_airTemps())),"°F.  Highs for this day range from ",
-                                              round(min(tf_maxAirTemps())),"°F to ",round(max(tf_maxAirTemps())),"°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
-                                              round(quantile(tf_airTemps(),.9)),"°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"°F.")
+                                              round(min(tf_airTemps())),"Â°F to ", round(max(tf_airTemps())),"Â°F.  Highs for this day range from ",
+                                              round(min(tf_maxAirTemps())),"Â°F to ",round(max(tf_maxAirTemps())),"Â°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
+                                              round(quantile(tf_airTemps(),.9)),"Â°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"Â°F.")
   })
   
   # output$airTempHighsHist=renderPlot({
