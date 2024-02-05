@@ -1,16 +1,20 @@
 #------------------------------------------------------------------#
 # This script accesses Big Wood app server and retrieves all data
-# necessary for generating app figures (box plots, others).
+# necessary for generating app figures (box plots, others), saves figures
+# in /www/ for app.R to access.
 #
 # Steven Schmitz
 # 2.1.24
 #------------------------------------------------------------------#
+#setwd("C:/Users/stevenschmitz/Desktop/BigWood-App-main")
+
 library("ggplot2")
-source(file.path(git_dir, 'code/init_db.R'))
-source(paste0(git_dir,"/code/fxn_dbIntakeTools.R")) 
+library("stringr")
+library("dplyr")
+source(file.path(git_dir,'code/init_db.R'))
+source(file.path(git_dir,'code/dbIntakeTools.R')) 
 
 conn=scdbConnect() 
-shiny_path <- "C:/Users/stevenschmitz/Desktop/BigWood-App-main"
 
 makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;")){
   groups=unique(dbdf[c("site","metric","simdate","rundate")])
@@ -36,37 +40,110 @@ makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;"
   return(bpData)
 }
 
-bwh_dat=makeBoxplotData(dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site= 'bwh' AND metric = 'irr_vol' AND simdate='2022-10-01';"))
-bws_dat=makeBoxplotData(dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site= 'bws' AND metric = 'irr_vol' AND simdate='2022-10-01';"))
-cc_dat=makeBoxplotData(dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site= 'cc' AND metric = 'irr_vol' AND simdate='2022-10-01';"))
-sc_dat=makeBoxplotData(dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site= 'sc' AND metric = 'irr_vol' AND simdate='2022-10-01';"))
+sites <- c("bwh", "bws", "cc", "sc")
+data_list <- list()
 
-combined_data_bw <- data.frame(
-  Group = rep(c("Big Wood at Hailey", "Big Wood at Stanton"), 
-              each = nrow(bwh_dat$stats)),
-  Value = c(bwh_dat$stats, bws_dat$stats)
+# query data for selected sites, log transformation of stats and outliers
+for (site in sites) {
+  query <- sprintf("SELECT * FROM summarystatistics WHERE site = '%s' AND metric = 'irr_vol' AND simdate = '2023-10-01';", site)
+  data <- makeBoxplotData(dbGetQuery(conn, query))
+  data_list[[site]] <- data
+  data_list[[site]]$stats <- exp(data_list[[site]]$stats)/1000
+  data_list[[site]]$out <- exp(data_list[[site]]$out)/1000
+}
+#------------------------------------------------------------------------------------#
+# organizing data into boxplot format - name|stats for box, name|out for outlier points
+#------------------------------------------------------------------------------------#
+
+data_list[['bwh']]$name <- "Big Wood at Haley"
+data_list[['bws']]$name <- "Big Wood at Stanton"
+bw_out <- rbind(
+  data.frame(name = data_list[['bwh']]$name, out = data_list[['bwh']]$out),
+  data.frame(name = data_list[['bws']]$name, out = data_list[['bws']]$out)
 )
-combined_data_sccc <- data.frame(
-  Group = rep(c("Silver Creek", "Camas Creek"), 
-              each = nrow(sc_dat$stats)),
-  Value = c(sc_dat$stats, cc_dat$stats)
+bw <- rbind(
+  data.frame(stats = data_list[['bwh']]$stats, name = data_list[['bwh']]$name),
+  data.frame(stats = data_list[['bws']]$stats, name = data_list[['bws']]$name)
+)
+max_values <- bw %>%
+  group_by(name) %>%
+  summarize(max_stat = max(stats),min_stat = min(stats))
+
+data_list[['cc']]$name <- "Camas Creek"
+cc_out <- rbind(
+  data.frame(name = data_list[['cc']]$name, out = data_list[['cc']]$out)
+)
+cc <- rbind(
+  data.frame(stats = data_list[['cc']]$stats, name = data_list[['cc']]$name)
 )
 
-png('boxplot_big_wood.png'), width = 800, height = 600)
-boxplot(Value ~ Group, data = combined_data_bw, # big wood stanton/haley box plot
-        col = c("royalblue3", "grey90", "blue3", "deepskyblue", "green3", "darkorange", "red"),
-        main = "Historic & Modeled Irrigation Season Volumes (April-Sept.)",
-        xlab = "",
-        ylab = "Irrigation Season Volume (KAF)"
-        )
-grid(lty = "dotted", col = "gray")
+data_list[['sc']]$name <- "Silver Creek"
+sc_out <- rbind(
+  data.frame(name = data_list[['sc']]$name, out = data_list[['sc']]$out)
+)
+sc <- rbind(
+  data.frame(stats = data_list[['sc']]$stats, name = data_list[['sc']]$name)
+)
+#--------------------------------------------------------------------------------------#
+# generate box plots for big wood sites, camas, and silver creek, save to /www/
+#--------------------------------------------------------------------------------------#
+
+bwbox <-ggplot(bw, aes(x=name, y=stats, fill=name), alpha = 0.6) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values=c("deepskyblue", "grey90")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
+  scale_y_continuous(breaks = round(seq(0, max(bw$stats, na.rm=TRUE), by = 25),1))+
+  
+  geom_point(data=bw_out, aes(x=name, y=out),position = position_jitter(width = 0.08), size=2, shape=21, color = "black")+
+  #scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
+  geom_segment(aes(x = name, xend = name, y = min_stat, yend = max_stat),
+               data = max_values, color = "black", linetype = "solid", linewidth = 0.5) +
+  theme_bw(base_size = 14)+
+  ggtitle("Irrigation Season Volumes (April-Sept.)") +
+  guides(fill = "none")+
+  xlab("")+
+  ylab("Irrigation Season Volume (KAF)")
+print(bwbox)
+ggsave(file.path("www/sampled_vol_bw.png"), bwbox,
+       width = 6.5, height = 5.5, units = "in", dpi = 600)
 dev.off()
 
-png('boxplot_sccc.png', width = 800, height = 600)
-boxplot(Value ~ Group, data = combined_data_sccc, # silver creek, camas creek box plot
-        col = c("royalblue3", "grey90", "blue3", "deepskyblue", "green3", "darkorange", "red"),
-        main = "Historic & Modeled Irrigation Season Volumes (April-Sept.)",
-        xlab = "",
-        ylab = "Irrigation Season Volume (KAF)")
-grid(lty = "dotted", col = "gray")
+ccbox <-ggplot(cc, aes(x=name, y=stats, fill=name), alpha = 0.6) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values=c("deepskyblue", "grey90")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
+  scale_y_continuous(breaks = round(seq(0, max(cc$stats, na.rm=TRUE), by = 25),1))+
+  
+  geom_point(data=cc_out, aes(x=name, y=out),position = position_jitter(width = 0.08), size=2, shape=21, color = "black")+
+  #scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
+  geom_segment(aes(x = name, xend = name, y = min(stats), yend = max(stats)),
+               data = cc, color = "black", linetype = "solid", linewidth = 0.5) +
+  theme_bw(base_size = 14)+
+  ggtitle("Irrigation Season Volumes (April-Sept.)") +
+  guides(fill = "none")+
+  xlab("")+
+  ylab("Irrigation Season Volume (KAF)")
+print(ccbox)
+ggsave(file.path("www/sampled_vol_cc.png"), ccbox,
+       width = 6.5, height = 5.5, units = "in", dpi = 600)
+dev.off()
+
+scbox <-ggplot(sc, aes(x=name, y=stats, fill=name), alpha = 0.6) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_fill_manual(values=c("deepskyblue", "grey90")) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
+  scale_y_continuous(breaks = round(seq(0, max(sc$stats, na.rm=TRUE), by = 25),1))+
+  
+  geom_point(data=sc_out, aes(x=name, y=out),position = position_jitter(width = 0.08), size=2, shape=21, color = "black")+
+  #scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
+  geom_segment(aes(x = name, xend = name, y = min(stats), yend = max(stats)),
+               data = sc, color = "black", linetype = "solid", linewidth = 0.5) +
+  theme_bw(base_size = 14)+
+  ggtitle("Irrigation Season Volumes (April-Sept.)") +
+  guides(fill = "none")+
+  xlab("")+
+  ylab("Irrigation Season Volume (KAF)")
+print(scbox)
+ggsave(file.path("www/sampled_vol_sc.png"), scbox,
+       width = 6.5, height = 5.5, units = "in", dpi = 600)
 dev.off()
