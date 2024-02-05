@@ -90,7 +90,7 @@ ui <- fluidPage(
                  img(
                    class = 'image',
                    style = "max-width: 100%; height: auto; border: 10px solid light grey; margin-right: 30px;",
-                   src = "www/hist_explanation.png",
+                   src = "hist_explanation.png",
                    align = "center"
                  ),
                  p(
