@@ -8,14 +8,15 @@ library("tidyr")
 library("ggplot2")
 library("stringr")
 library("dplyr")
-source(file.path(git_dir,'code/init_db.R'))
-source(file.path(git_dir,'code/dbIntakeTools.R')) 
+source(file.path('init_db.R'))
+source(file.path('dbIntakeTools.R')) 
 
 conn=scdbConnect() 
 #-----------------------------------------------------------------------------------#
 steven_dir = "C:/Users/stevenschmitz/Desktop/" # local directory, removed for git push
 
-alldat <- read.csv("C:/Users/stevenschmitz/Desktop/WRWC/WRWC-master_1222024/WRWC-master/April_output/all_vars.csv") # fix directory
+pred.yr <<- 2024 # loop back to this
+alldat <- read.csv("all_vars.csv") # fix directory potentially
 wq <- alldat %>% select("wateryear", "bwh.wq", "bws.wq", "cc.wq", "sc.wq") %>% pivot_longer(!wateryear, names_to = "site", values_to = "winterFlow")
 
 # Boxplots of Historic Conditions
@@ -28,7 +29,7 @@ wq_box<- ggplot(wq %>% filter(wateryear < pred.yr), aes(x=factor(site), y=winter
   geom_point(data = wq %>% filter(wateryear == pred.yr),  aes(x=factor(site), y=winterFlow), color="blue", size=3, shape=15)+
   scale_x_discrete(labels= sitelabs)
 
-png(filename = file.path("wq_box.png"),
+png(filename = file.path("www/wq_box.png"),
     width = 5.5, height = 5.5,units = "in", pointsize = 12,
     bg = "white", res = 600) 
 print(wq_box)
@@ -141,7 +142,7 @@ p<-ggplot(vol.big, fill=t, aes(x=site, y=value, fill=site), alpha=0.6) +
   xlab("")+
   ylab("Irrigation Season Volume (KAF)") 
 
-png(filename = file.path("sampled_vol_bw.png"),
+png(filename = file.path("www/sampled_vol_bw.png"),
     width = 6.5, height = 5.5,units = "in", pointsize = 12,
     bg = "white", res = 600) 
 print(p)
@@ -161,7 +162,7 @@ ps<- ggplot(vol.sm, fill =t, aes(x=site, y=value, fill=site), alpha=0.6) +
   xlab("")+
   ylab("Irrigation Volume (KAF)")
 
-png(filename = file.path("sampled_vol_sc.png"),
+png(filename = file.path("www/sampled_vol_sc.png"),
     width = 5.5, height = 5.5,units = "in", pointsize = 12,
     bg = "white", res = 600) 
 print(ps)
@@ -181,8 +182,10 @@ pc<- ggplot(vol.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
   xlab("")+
   ylab("Irrigation Volume (KAF)")
 
-png(filename = file.path("sampled_vol_cc.png"),
+png(filename = file.path("www/sampled_vol_cc.png"),
     width = 5.5, height = 5.5,units = "in", pointsize = 12,
     bg = "white", res = 600) 
+print(pc)
+dev.off()
 print(pc)
 dev.off()
