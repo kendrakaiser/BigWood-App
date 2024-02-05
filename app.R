@@ -20,6 +20,9 @@ source('functions.r')
 source('plotter.R') 
 conn=scdbConnect()
 
+base_path <- normalizePath(file.path(dirname(rstudioapi::getActiveDocumentContext()$path), "."))
+setwd(base_path)
+
 end_date <<-as.Date("2022-08-01") # this will be changed to using the sys.date after testing
 
 # Define UI for application that draws a histogram
@@ -87,7 +90,7 @@ ui <- fluidPage(
                  img(
                    class = 'image',
                    style = "max-width: 100%; height: auto; border: 10px solid light grey; margin-right: 30px;",
-                   src = "hist_explanation.png",
+                   src = "www/hist_explanation.png",
                    align = "center"
                  ),
                  p(
@@ -337,9 +340,9 @@ server <- function(input, output) {
   
   output$tf_airTempDisplay=renderText({paste0("Daily average average air temperatures at the Picabo AgriMet station for ",
                                               format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," range from ",
-                                              round(min(tf_airTemps())),"Â°F to ", round(max(tf_airTemps())),"Â°F.  Highs for this day range from ",
-                                              round(min(tf_maxAirTemps())),"Â°F to ",round(max(tf_maxAirTemps())),"Â°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
-                                              round(quantile(tf_airTemps(),.9)),"Â°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"Â°F.")
+                                              round(min(tf_airTemps())),"ÃÂ°F to ", round(max(tf_airTemps())),"ÃÂ°F.  Highs for this day range from ",
+                                              round(min(tf_maxAirTemps())),"ÃÂ°F to ",round(max(tf_maxAirTemps())),"ÃÂ°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
+                                              round(quantile(tf_airTemps(),.9)),"ÃÂ°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"ÃÂ°F.")
   })
   
   # output$airTempHighsHist=renderPlot({
