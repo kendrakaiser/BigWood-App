@@ -24,6 +24,10 @@ conn=scdbConnect()
 minDateTime=as.Date("1911-01-01")
 maxDateTime=Sys.Date()
 
+tf_predFlowData=dbGetQuery(conn,'SELECT date, "sc.low", "sc.med", "sc.mean", "sc.hi" FROM predictionintervals;')
+tf_predFlowData$doy=as.numeric(format.Date(tf_predFlowData$date, "%j"))
+
+
 #dbGetQuery(conn,"SELECT DISTINCT ST_SRID(geometry) FROM locations;")$st_srid
 #dbGetQuery(conn,"SELECT DISTINCT name FROM metrics;")
 
@@ -215,6 +219,11 @@ getIndexFlowsByDate=function(tf_date, indexFlowLocation=144){
   return(indexFlows)
 }
 
+getPredictedFlowsByDate=function(tf_date, predictedFlows=tf_predFlowData){
+  doy=as.numeric(format.Date(tf_date,"%j"))
+  return(predictedFlows[predictedFlows$doy==doy,])
+}
+
 # getTemperatureModel=function(){
 #   temperatureModel=readRDS("/home/sam/Documents/R Workspace/SilverCreekQualityModel/temperatureModel.rds")
 #   return(temperatureModel)
@@ -222,7 +231,7 @@ getIndexFlowsByDate=function(tf_date, indexFlowLocation=144){
 #saveRDS(getTemperatureModel(),paste0(getwd(),"/www/temperatureModel.rds"))
 
 
-getTemperatureColor=colorNumeric( palette=viridis::turbo(60), domain = c(49, 75), na.color = "#7A0403")
+getTemperatureColor=colorNumeric( palette=viridis::turbo(60), domain = c(49, 72), na.color = "#7A0403")
 
 
 predictSegTemperatures=function(indexFlow, meanAirTemp_F, forecastDate, streamSegs, tempModel=temperatureModel){
@@ -264,7 +273,19 @@ predictSegTemperatures=function(indexFlow, meanAirTemp_F, forecastDate, streamSe
   
 }
 
-
+getTemperatureStats=function(tf_indexFlows,tf_predFlows, airTemp, forecastDate, streamSegs, temperatureModel){
+  
+  getSegTempStats=function(indexFlow, airTemp, forecastDate, streamSegs, tempModel){
+    segTemps=predictSegTemperatures(indexFlow,airTemp,forecastDate,streamSegs=streamSegs, tempModel = tempModel)
+    return(data.frame(date=forecastDate,airTemp=airTemp,indexFlow=indexFlow,meanSegTemp=mean(segTemps$temperature_F),lengthAbove65=sum((segTemps$temperature_F>65)*segTemps$length)))
+  }
+  
+  allFlows=seq(from=round(min(c(tf_indexFlows*.8,tf_predFlows$sc.low))), to=round(max(c(tf_indexFlows*1.2,tf_predFlows$sc.hi))), by=10)
+  tf_stats=do.call(rbind,lapply(allFlows,getSegTempStats,airTemp=airTemp,forecastDate=forecastDate,streamSegs=streamSegs,tempModel=temperatureModel))
+  tf_stats$pctAbove65=100 * (tf_stats$lengthAbove65 / 101221.3)
+  return(tf_stats)
+  
+}
 
 
 
