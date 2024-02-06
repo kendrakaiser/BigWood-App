@@ -90,7 +90,7 @@ for (i in 1:nrow(vol_data)) {
   }
 }
 #-----------------------------------------------------------------------------------#
-var<-read.csv(file.path("C:/Users/stevenschmitz/Desktop/WRWC/WRWC-master_1222024/WRWC-master/April_output/all_vars.csv"))
+var<-read.csv(file.path("all_vars.csv"))
 
 vol.hist<- as.data.frame(var[var$wateryear < pred.yr ,] %>% dplyr::select(c(bwh.irr_vol, bws.irr_vol)) %>% `colnames<-`(c("Big Wood Hailey Hist", "Big Wood Stanton Hist")) %>%pivot_longer(everything(),  names_to = "site", values_to = "value") )
 vol.hist$value<-vol.hist$value/1000
