@@ -57,7 +57,7 @@ ui <- fluidPage(
                      style = "color: #2980B9; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.5vw; font-weight: bold; text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); background-color: transparent; border-radius: 5px; word-wrap: break-word; max-width: 100%;"
                    )
                  )
-                ),
+               ),
                tags$div(
                  class = "landing-block",
                  style = "background-color: white; font-size: 2.5vh; text-align: center; margin-top: -20px; margin-left: 35px; box-shadow: 2px 4px 10px black;",
@@ -87,6 +87,7 @@ ui <- fluidPage(
                    in the Big Wood River Basin (above Magic), Camas Creek and Silver Creek.', style = "font-size:1.5vh"),
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
+
                  img(
                    class = 'image',
                    style = "max-width: 100%; height: auto; border: 10px solid light grey; margin-right: 30px;",
@@ -109,6 +110,7 @@ ui <- fluidPage(
                  br(),
                  #plotOutput("big_vols", width = "80%"),
                  div(
+
                    img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_bw.png', 
                      align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
                      style = "display: flex; justify-content: space-between;"
@@ -136,9 +138,9 @@ ui <- fluidPage(
                  h6("Time of year is used to identify historical distributions of air temperature and streamflow values, and to determine day length for use in the forecasting process.  Set the time of year below:"),
                  sliderInput(inputId = "tf_date",
                              label=NULL,
-                             value=as.Date("2000-07-01"),
+                             value=as.Date("2000-06-01"),
                              min=as.Date("2000-05-01"),
-                             max=as.Date("2000-10-30"),
+                             max=as.Date("2000-09-30"),
                              timeFormat="%m/%d"),
                  
                  
@@ -177,7 +179,8 @@ ui <- fluidPage(
                ),
                
                mainPanel(
-                 leafletOutput("temperatureMap",height="500px")
+                 leafletOutput("temperatureMap",height="500px"),
+                 plotOutput("tf_summaryPlot")
                  
                )
                
@@ -231,7 +234,7 @@ ui <- fluidPage(
 )
 
 
-# Define server logic required to draw a histogram
+########---------Server side.  Note that the server side instanc3e is shared between multiple applications (UIs), so avoid use of UI-specific variables here.
 server <- function(input, output) {
   
   output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
@@ -333,6 +336,7 @@ server <- function(input, output) {
   
   
   ############# temperature forecasting tool -----------
+  
   temperatureModel=readRDS(paste0(getwd(),"/www/temperatureModel.rds"))
   
   tf_airTemps=reactive({getAirTempsByDate(input$tf_date)})
@@ -340,9 +344,10 @@ server <- function(input, output) {
   
   output$tf_airTempDisplay=renderText({paste0("Daily average average air temperatures at the Picabo AgriMet station for ",
                                               format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," range from ",
-                                              round(min(tf_airTemps())),"ÃÂ°F to ", round(max(tf_airTemps())),"ÃÂ°F.  Highs for this day range from ",
-                                              round(min(tf_maxAirTemps())),"ÃÂ°F to ",round(max(tf_maxAirTemps())),"ÃÂ°F.  This forecast will simulate hot but not unusual day with an average temperature of ",
-                                              round(quantile(tf_airTemps(),.9)),"ÃÂ°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"ÃÂ°F.")
+                                              round(min(tf_airTemps())),"°F to ", round(max(tf_airTemps())),"°F.  Highs for this day range from ",
+                                              round(min(tf_maxAirTemps())),"°F to ",round(max(tf_maxAirTemps())),"°F.  This forecast simulates a hot but not unusual day with an average temperature of ",
+                                              round(quantile(tf_airTemps(),.9)),"°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"°F.")
+
   })
   
   # output$airTempHighsHist=renderPlot({
@@ -366,17 +371,26 @@ server <- function(input, output) {
   # })
   
   tf_indexFlows=reactive({getIndexFlowsByDate(input$tf_date)})
+  tf_predFlows=reactive({getPredictedFlowsByDate(input$tf_date)})
   
-  output$tf_flowDisplay=renderText({paste0("The state of streamflow in Silver Creek is described in terms of the flow at the Sportsmans Gauge.  The average streamflow at Sportsmans for ",
-                                           format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," is ",round(mean(tf_indexFlows()),1)," cfs, and the historical distribution of streamflow for this day is shown in the plot below.  Use the slider beneath this plot to set the streamflow for the simulation:")
+  tf_stats=reactive({getTemperatureStats(tf_indexFlows = tf_indexFlows(), tf_predFlows = tf_predFlows(), airTemp = quantile(tf_airTemps(),.9), forecastDate=tf_date(), streamSegs = streamSegs, temperatureModel = temperatureModel)})
+  
+  output$tf_flowDisplay=renderText({paste0("Streamflow in Silver Creek is described in terms of the flow at the Sportsmans Gauge.  The predicted streamflow at Sportsmans for ",
+                                           tf_predFlows()$date," is ",round(tf_predFlows()$sc.med)," cfs (90% confidence interval: ",
+                                           round(tf_predFlows()$sc.low)," - ",round(tf_predFlows()$sc.hi)," cfs ), and the historical distribution of streamflow for this day is shown in the plot below.  Use the slider beneath this plot to set the streamflow for the simulation:")
   })
   
+  # output$tf_flowDisplay=renderText({paste0("Streamflow in Silver Creek is described in terms of the flow at the Sportsmans Gauge.  The average streamflow at Sportsmans for ",
+  #                                          format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," is ",round(mean(tf_indexFlows()),1)," cfs, and the historical distribution of streamflow for this day is shown in the plot below.  Use the slider beneath this plot to set the streamflow for the simulation:")
+  # })
+  
   output$flowForecastHist=renderPlot({
-    minForecastFlow=round(min(tf_indexFlows())*.5,digits=0)
-    maxForecastFlow=round(max(tf_indexFlows())*1.25,digits=-1)
+    minForecastFlow=round(min(tf_indexFlows())*.8,digits=0)
+    maxForecastFlow=round(max(tf_indexFlows())*1.2,digits=-1)
     maxForecastFlow=min(maxForecastFlow,300)
     
-    updateSliderInput(inputId = "tf_indexFlow",min=minForecastFlow,max=maxForecastFlow)
+    updateSliderInput(inputId = "tf_indexFlow",value=round(tf_predFlows()$sc.med),min=minForecastFlow,max=maxForecastFlow)
+    
     
     par(bg="transparent")
     par(oma=c(0,0,0,0))
@@ -398,10 +412,10 @@ server <- function(input, output) {
   
   g=1
   streamSegs= st_transform(st_read(conn,query="SELECT segid, geometry, length FROM streamsegments;"),4326)
-  streamSegs=streamSegs[!streamSegs$segid %in% c(1308, 1629),] #two short segs with inflated uaa (and therefore erronious flow) due to raster->vector issues
-  streamSegs$color=c("darkblue","blue")
+  streamSegs=streamSegs[!streamSegs$segid %in% c(1308, 1629),] #two short segs with inflated uaa (and therefore eronious flow) due to raster->vector issues
+  streamSegs$color=("darkblue")
   
-  segTemperatures=reactive(predictSegTemperatures(indexFlow = tf_indexFlow(), meanAirTemp_F = round(quantile(tf_airTemps(),.9)), forecastDate=tf_date(), streamSegs=streamSegs, tempModel=temperatureModel) )
+  #segTemperatures=reactive(predictSegTemperatures(indexFlow = tf_indexFlow(), meanAirTemp_F = round(quantile(tf_airTemps(),.9)), forecastDate=tf_date(), streamSegs=streamSegs, tempModel=temperatureModel) )
   
   
   temperatureMap = leaflet( leafletOptions(leafletCRS(crsClass="L.CRS.EPSG4326")) )
@@ -413,22 +427,47 @@ server <- function(input, output) {
                                attribution = 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>',
                                tileOptions(zIndex=1))
   
-  temperatureMap=addPolylines(map=temperatureMap,data=isolate(segTemperatures()),color=isolate(segTemperatures())$color, label=round(isolate(segTemperatures())$temperature_F,1),opacity=1,group=paste0("g",g))
-
+  temperatureMap=addPolylines(map=temperatureMap,data=streamSegs,color="darkgray", label="",opacity=1,group=paste0("g",g), weight=3)
   
-  temperatureMap=addLegend(map=temperatureMap,position="topright",pal=getTemperatureColor,values=50:75,opacity=1)
+  
+  temperatureMap=addLegend(map=temperatureMap,position="topright",pal=getTemperatureColor,values=50:72,opacity=1)
   
   output$temperatureMap = renderLeaflet(temperatureMap)
   
-  
+  ##update temperature map and plot on click:
   observeEvent(input$mapTemperature,{
-  
-    leafletProxy("temperatureMap", data=segTemperatures()) %>% 
-      addPolylines(label=round(segTemperatures()$temperature_F,1),color=segTemperatures()$color,opacity=1,group = paste0("g",g+1))
-      #clearGroup(paste0("g",g))  #add new layer first, then remove old one.  g is inhereted from parent environment and never sent back
-
+    
+    segTemperatures=predictSegTemperatures(indexFlow = isolate(tf_indexFlow()), meanAirTemp_F = isolate(round(quantile(tf_airTemps(),.9))), forecastDate=isolate(tf_date()), streamSegs=streamSegs, tempModel=temperatureModel)
+    
+    leafletProxy("temperatureMap", data=segTemperatures) %>% 
+      addPolylines(label=round(segTemperatures$temperature_F,1),color=segTemperatures$color,opacity=1,group = paste0("g",g+1))
+    #clearGroup(paste0("g",g))  #add new layer first, then remove old one.  g is inherited from parent environment and never sent back
+    
+    
+    output$tf_summaryPlot=renderPlot({
+      old_mar=par("mar")
+      
+      par(mar=old_mar+c(0,0,0,2))
+      plot(isolate(tf_stats()$meanSegTemp)~isolate(tf_stats()$indexFlow), type="l",col="red4", lwd=2,axes=F,ylab="", xlab = "Index Flow", main=paste0("Stream Temperatures vs. Flow for ", isolate(tf_predFlows()$date)), ylim=c(55,70))
+      axis(side=1,at=seq(from=0,to=300,by=50))
+      axis(side=2,col="red4", lwd=2)
+      mtext("Average Stream Temperature", side=2, line=3, col="red4")
+      par(new=T)
+      plot(isolate(tf_stats()$pctAbove65)~isolate(tf_stats()$indexFlow), type="l", axes=F, ylab="",xlab="",col="seashell4",lwd=2,lty=2,ylim=c(0,100))
+      axis(side=4,col="seashell4",lwd=2,lty=2)
+      mtext("Percent of network above 65°F", side = 4, line=3, col="seashell4")
+      abline(v=isolate(tf_indexFlow()))
+      
+      par(mar = old_mar)
+      
+    }, width=500, height=350)
     
   })
+  
+
+  
+  
+  
   
 }
 
