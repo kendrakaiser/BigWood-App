@@ -16,7 +16,7 @@ library(leaflet)
 library(sf)
 library(shinyWidgets)
 
-#source('functions.r')
+source('functions.r')
 #source('plotter.R') 
 conn=scdbConnect()
 
