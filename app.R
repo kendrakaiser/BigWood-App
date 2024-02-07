@@ -16,8 +16,8 @@ library(leaflet)
 library(sf)
 library(shinyWidgets)
 
-source('functions.r')
-source('plotter.R') 
+#source('functions.r')
+#source('plotter.R') 
 conn=scdbConnect()
 
 base_path <- normalizePath(file.path(dirname(rstudioapi::getActiveDocumentContext()$path), "."))
@@ -111,7 +111,7 @@ ui <- fluidPage(
                  #plotOutput("big_vols", width = "80%"),
                  div(
 
-                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_bw.png', 
+                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_volumes.png', 
                      align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
                      style = "display: flex; justify-content: space-between;"
                  ),
@@ -119,14 +119,14 @@ ui <- fluidPage(
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(),
                  div(
-                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_cc.png', 
-                       align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
-                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_sc.png', 
+                   #img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_cc.png', 
+                    #   align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
+                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_sc_vol.png', 
                        align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
                    style = "display: flex; justify-content: space-between;"
                  ),
                  #plotOutput("sc_vols", width = "30%"),
-                 p('Figure 2: Box plots of Silver Creek and Camas Creek historic and forecasted streamflow'),
+                 p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow'),
                ))
     ),
     
