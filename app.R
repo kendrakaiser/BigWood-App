@@ -6,15 +6,8 @@
 #    http://shiny.rstudio.com/
 # Sys.setenv(scdb_readPass="")
 
-library(shinythemes)
-library(shiny)
-library(RPostgres)
-library(DBI)
-library(ggplot2)
-library(stringr)
-library(leaflet)
-library(sf)
-library(shinyWidgets)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load("shinythemes","shiny","RPostgres","DBI","ggplot2","stringr","leaflet","sf","shinyWidgets")
 
 source('functions.r')
 #source('plotter.R') 
