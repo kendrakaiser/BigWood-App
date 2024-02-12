@@ -20,8 +20,8 @@ source('functions.r')
 #source('plotter.R') 
 conn=scdbConnect()
 
-base_path <- normalizePath(file.path(dirname(rstudioapi::getActiveDocumentContext()$path), "."))
-setwd(base_path)
+#base_path <- normalizePath(file.path(dirname(rstudioapi::getActiveDocumentContext()$path), "."))
+#setwd(base_path)
 
 end_date <<-as.Date("2022-08-01") # this will be changed to using the sys.date after testing
 
