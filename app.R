@@ -101,25 +101,16 @@ ui <- fluidPage(
                  tableOutput("forecasted_vols"), 
                  p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(),
-                 #plotOutput("big_vols", width = "80%"),
-                 div(
-
-                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_volumes.png', 
-                     align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
-                     style = "display: flex; justify-content: space-between;"
-                 ),
+                 plotOutput("gen_bw_plot", width = "80%"),
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(),
                  div(
-                   #img(class = 'image', height = '75%', width = '75%', src = 'sampled_vol_cc.png', 
-                    #   align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
-                   img(class = 'image', height = '75%', width = '75%', src = 'sampled_sc_vol.png', 
-                       align = 'center', style="border:10px solid white", alt="historical streamflow volume"),
-                   style = "display: flex; justify-content: space-between;"
+                   style = "display: flex; justify-content: space-between;",
+                   plotOutput("gen_sc_plot", width="45%"),
+                   plotOutput("gen_cc_plot", width="45%")
                  ),
-                 #plotOutput("sc_vols", width = "30%"),
-                 p('Figure 2: Box plots of Silver Creek historic and forecasted streamflow'),
+                 p('Figure 2: Box plots of Silver Creek and Camas Creek historic and forecasted streamflow'),
                ))
     ),
     
@@ -246,7 +237,15 @@ server <- function(input, output) {
   useData=dbGetQuery(conn,query)
   useData=merge(useData,useMetrics,by.x="metric",by.y="name")
   
-  
+  output$gen_bw_plot <- renderPlot({
+    gen_bw(vol.big, ex.vols3)  # Call the gen_bw function here to generate the plot
+  })
+  output$gen_sc_plot <- renderPlot({
+    gen_sc(vol.sm, ex.vols3)  # Call the gen_bw function here to generate the plot
+  })
+  output$gen_cc_plot <- renderPlot({
+    gen_cc(vol.cc, ex.vols3)  # Call the gen_bw function here to generate the plot
+  })
   output$predPlot <- renderPlot({
     
     # is there a better way to do this? 
