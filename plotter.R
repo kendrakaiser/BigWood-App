@@ -13,11 +13,8 @@ source(file.path('dbIntakeTools.R'))
 
 conn=scdbConnect() 
 #-----------------------------------------------------------------------------------#
-steven_dir = "C:/Users/stevenschmitz/Desktop/" # local directory, removed for git push
 
 pred.yr <<- 2024 # loop back to this
-alldat <- read.csv("all_vars.csv") # fix directory potentially
-wq <- alldat %>% select("wateryear", "bwh.wq", "bws.wq", "cc.wq", "sc.wq") %>% pivot_longer(!wateryear, names_to = "site", values_to = "winterFlow")
 
 # Boxplots of Historic Conditions
 sitelabs<- c( "Big Wood Hailey", "Big Wood Stanton", "Camas Creek", "Silver Creek")
