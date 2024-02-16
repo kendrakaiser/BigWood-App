@@ -10,7 +10,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load("shinythemes","shiny","RPostgres","DBI","ggplot2","stringr","leaflet","sf","shinyWidgets")
 
 source('functions.r')
-#source('plotter.R') 
+source('plotter.R') 
 conn=scdbConnect()
 
 #base_path <- normalizePath(file.path(dirname(rstudioapi::getActiveDocumentContext()$path), "."))
