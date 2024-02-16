@@ -36,7 +36,35 @@ print(wq_box)
 dev.off()
 
 #-----------------------------------------------------------------------------------#
-
+x <- dbGetQuery(conn,"SELECT metric,value, datetime, locationid FROM data WHERE datetime >= '2003-01-01' AND qcstatus = 'TRUE' AND locationid = 164;")
+calcVolStats=function(x,site.metric,simDate,runDate=Sys.Date()){
+  
+  simDate=as.Date(simDate)
+  
+  
+  if(length(strsplit(site.metric,"\\.")[[1]])!=2){
+    stop(paste0("Invalid site.metric ",site.metric))
+  }
+  
+  site=strsplit(site.metric,"\\.")[[1]][1]
+  metric=strsplit(site.metric,"\\.")[[1]][2]
+  
+  
+  x.stats=boxplot.stats(x)
+  
+  statDF=data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="n",value=x.stats$n)
+  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="min",value=x.stats$stats[[1]]))
+  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="lower_hinge",value=x.stats$stats[[2]]))
+  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="med",value=x.stats$stats[[3]]))
+  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="upper_hinge",value=x.stats$stats[[4]]))
+  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="max",value=x.stats$stats[[5]]))
+  if(length(x.stats$out)>0){
+    statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="outlier",value=x.stats$out))
+  }
+  return(statDF)
+  
+  #dbWriteTable(conn,"summarystatistics",statDF,append=T)
+}
 makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;")){
   groups=unique(dbdf[c("site","metric","simdate","rundate")])
   bpData=list(stats=matrix(nrow=5,ncol=nrow(groups)),n=rep(NA,nrow(groups)),out=vector(),group=vector(),names=vector())
