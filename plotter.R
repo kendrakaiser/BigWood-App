@@ -18,22 +18,8 @@ pred.yr <<- 2024 # loop back to this
 
 # Boxplots of Historic Conditions
 sitelabs<- c( "Big Wood Hailey", "Big Wood Stanton", "Camas Creek", "Silver Creek")
-wq_box<- ggplot(wq %>% filter(wateryear < pred.yr), aes(x=factor(site), y=winterFlow))+
-  geom_boxplot(alpha=0.8)+
-  theme_bw()+
-  xlab("USGS Site")+
-  ylab("Average Nov-Jan Winter Flow (cfs)")+
-  geom_point(data = wq %>% filter(wateryear == pred.yr),  aes(x=factor(site), y=winterFlow), color="blue", size=3, shape=15)+
-  scale_x_discrete(labels= sitelabs)
 
-png(filename = file.path("www/wq_box.png"),
-    width = 5.5, height = 5.5,units = "in", pointsize = 12,
-    bg = "white", res = 600) 
-print(wq_box)
-dev.off()
-
-#-----------------------------------------------------------------------------------#
-x <- dbGetQuery(conn,"SELECT metric,value, datetime, locationid FROM data WHERE datetime >= '2003-01-01' AND qcstatus = 'TRUE' AND locationid = 164;")
+#x <- dbGetQuery(conn,"SELECT metric,value, datetime, locationid FROM data WHERE datetime >= '2003-01-01' AND qcstatus = 'TRUE' AND locationid = 164;")
 calcVolStats=function(x,site.metric,simDate,runDate=Sys.Date()){
   
   simDate=as.Date(simDate)
@@ -115,31 +101,48 @@ for (i in 1:nrow(vol_data)) {
   }
 }
 #-----------------------------------------------------------------------------------#
-var<-read.csv(file.path("all_vars.csv"))
+# calculating historical volume data from database, date range 2003 - 2022
+# site id:
+#     bwh <- 140
+#     bws <- 141
+#     sc <- 163
+#     cc <- 167
+#-----------------------------------------------------------------------------------#
+bwh_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '140' 
+                AND qcstatus = 'TRUE' 
+                AND metricid = '14'
+                AND datetime >= '2003-01-01'")
+bws_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '141' 
+                AND qcstatus = 'TRUE' 
+                AND metricid = '14'
+                AND datetime >= '2003-01-01'")
+sc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '163' 
+                AND qcstatus = 'TRUE' 
+                AND metricid = '14'
+                AND datetime >= '2003-01-01'")
+cc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '167' 
+                AND qcstatus = 'TRUE' 
+                AND metricid = '14'
+                AND datetime >= '2003-01-01'")
 
-vol.hist<- as.data.frame(var[var$wateryear < pred.yr ,] %>% dplyr::select(c(bwh.irr_vol, bws.irr_vol)) %>% `colnames<-`(c("Big Wood Hailey Hist", "Big Wood Stanton Hist")) %>%pivot_longer(everything(),  names_to = "site", values_to = "value") )
-vol.hist$value<-vol.hist$value/1000
-vol.hist$t<- "Historic"
-vol.hist.sm<-as.data.frame(var[var$wateryear < pred.yr,] %>% dplyr::select(c(sc.irr_vol)) %>% `colnames<-`(c("Silver Creek Hist")) %>% pivot_longer(everything(),  names_to = "site", values_to = "value") )
-vol.hist.sm$value<-vol.hist.sm$value/1000
-vol.hist.sm$t<- "Historic"
-vol.hist.cc<-as.data.frame(var[var$wateryear < pred.yr,] %>% dplyr::select(c(cc.irr_vol)) %>% `colnames<-`(c("Camas Creek Hist")) %>% pivot_longer(everything(),  names_to = "site", values_to = "value") )
-vol.hist.cc$value<-vol.hist.cc$value/1000
-vol.hist.cc$t<- "Historic"
+bwh_hist <- boxplot.stats(bwh_hist$value)
+bwh_hist <- bwh_hist$stats/1000
+bwh_hist$t <- 'Historic'
+bws_hist <- boxplot.stats(bws_hist$value)
+bws_hist <- bws_hist$stats/1000
+bws_hist$t <- 'Historic'
 
-vol.pred <-as.data.frame(vol_data) 
-vol.pred$t<- "Predicted"
+sc_hist <- boxplot.stats(sc_hist$value)
+sc_hist <- sc_hist$stats/1000
+sc_hist$t <- 'Historic'
+cc_hist <- boxplot.stats(cc_hist$value)
+cc_hist <- cc_hist$stats/1000
+cc_hist$t <- 'Historic'
 
-vol.big<- rbind(vol.hist, vol.pred[vol.pred$site != "Silver Creek" & vol.pred$site != "Camas Creek",])
-vol.sm<- rbind(vol.hist.sm, vol.pred[vol.pred$site == "Silver Creek",])
-vol.cc<- rbind(vol.hist.cc, vol.pred[vol.pred$site == "Camas Creek",])
-vol.cc$t <- factor(vol.cc$t)
-vol.big$t <- factor(vol.big$t)
-vol.sm$t <- factor(vol.sm$t)
-vol.big$site<-factor(vol.big$site,levels = c("Big Wood Hailey Hist","Big Wood Hailey", "Big Wood Stanton Hist", "Big Wood Stanton"), ordered = TRUE)
-vol.sm$site<-factor(vol.sm$site,levels = c("Silver Creek Hist","Silver Creek"), ordered = TRUE)
-vol.cc$site<-factor(vol.cc$site,levels = c("Camas Creek Hist", "Camas Creek" ), ordered = TRUE)
-vol.big <- vol.big[vol.big$t != "Levels: Historic Predicted", ]
+bwh_hist$t <- factor(bwh_hist$t)
+bws_hist$t <- factor(bws_hist$t)
+sc_hist$t <- factor(sc_hist$t)
+cc_hist$t <- factor(cc_hist$t)
 #-------------------------------------------------------------------------------------#
 
 exc_prob=dbGetQuery(conn,"SELECT * FROM exceednaceprobabilities;") # note table mispelling, need to fix
