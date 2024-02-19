@@ -15,39 +15,8 @@ conn=scdbConnect()
 #-----------------------------------------------------------------------------------#
 
 pred.yr <<- 2024 # loop back to this
-
-# Boxplots of Historic Conditions
 sitelabs<- c( "Big Wood Hailey", "Big Wood Stanton", "Camas Creek", "Silver Creek")
 
-#x <- dbGetQuery(conn,"SELECT metric,value, datetime, locationid FROM data WHERE datetime >= '2003-01-01' AND qcstatus = 'TRUE' AND locationid = 164;")
-calcVolStats=function(x,site.metric,simDate,runDate=Sys.Date()){
-  
-  simDate=as.Date(simDate)
-  
-  
-  if(length(strsplit(site.metric,"\\.")[[1]])!=2){
-    stop(paste0("Invalid site.metric ",site.metric))
-  }
-  
-  site=strsplit(site.metric,"\\.")[[1]][1]
-  metric=strsplit(site.metric,"\\.")[[1]][2]
-  
-  
-  x.stats=boxplot.stats(x)
-  
-  statDF=data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="n",value=x.stats$n)
-  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="min",value=x.stats$stats[[1]]))
-  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="lower_hinge",value=x.stats$stats[[2]]))
-  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="med",value=x.stats$stats[[3]]))
-  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="upper_hinge",value=x.stats$stats[[4]]))
-  statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="max",value=x.stats$stats[[5]]))
-  if(length(x.stats$out)>0){
-    statDF=rbind(statDF,data.frame(site=site,metric=metric,rundate=runDate,simdate=simDate,stat="outlier",value=x.stats$out))
-  }
-  return(statDF)
-  
-  #dbWriteTable(conn,"summarystatistics",statDF,append=T)
-}
 makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;")){
   groups=unique(dbdf[c("site","metric","simdate","rundate")])
   bpData=list(stats=matrix(nrow=5,ncol=nrow(groups)),n=rep(NA,nrow(groups)),out=vector(),group=vector(),names=vector())
@@ -100,6 +69,11 @@ for (i in 1:nrow(vol_data)) {
     vol_data[i, "site"] <- "Silver Creek"
   }
 }
+vol_data$t <- 'Predicted'
+
+vol.big <- vol_data[vol_data$site == 'Big Wood Hailey' | vol_data$site == 'Big Wood Stanton',]
+vol.sc <- vol_data[vol_data$site == 'Silver Creek',]
+vol.cc <- vol_data[vol_data$site == 'Camas Creek',]
 #-----------------------------------------------------------------------------------#
 # calculating historical volume data from database, date range 2003 - 2022
 # site id:
@@ -116,7 +90,7 @@ bws_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '141'
                 AND qcstatus = 'TRUE' 
                 AND metricid = '14'
                 AND datetime >= '2003-01-01'")
-sc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '163' 
+sc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '144' 
                 AND qcstatus = 'TRUE' 
                 AND metricid = '14'
                 AND datetime >= '2003-01-01'")
@@ -126,26 +100,52 @@ cc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '167'
                 AND datetime >= '2003-01-01'")
 
 bwh_hist <- boxplot.stats(bwh_hist$value)
-bwh_hist <- bwh_hist$stats/1000
+bwh_hist$stats <- bwh_hist$stats/1000
 bwh_hist$t <- 'Historic'
 bws_hist <- boxplot.stats(bws_hist$value)
-bws_hist <- bws_hist$stats/1000
+bws_hist$stats <- bws_hist$stats/1000
 bws_hist$t <- 'Historic'
 
 sc_hist <- boxplot.stats(sc_hist$value)
-sc_hist <- sc_hist$stats/1000
+sc_hist$stats <- sc_hist$stats/1000
 sc_hist$t <- 'Historic'
 cc_hist <- boxplot.stats(cc_hist$value)
-cc_hist <- cc_hist$stats/1000
+cc_hist$stats <- cc_hist$stats/1000
 cc_hist$t <- 'Historic'
 
 bwh_hist$t <- factor(bwh_hist$t)
 bws_hist$t <- factor(bws_hist$t)
 sc_hist$t <- factor(sc_hist$t)
 cc_hist$t <- factor(cc_hist$t)
+
+vol.1big.hist <- data.frame( # reformatting for merge with modeled vols
+  value = bwh_hist$stats,  
+  site = rep('Big Wood Hailey (Historic)', length(bwh_hist$stats)),
+  t = as.character(bwh_hist$t)
+)
+vol.2big.hist <- data.frame( # reformatting for merge
+  value = bws_hist$stats,  
+  site = rep('Big Wood Stanton (Historic)', length(bws_hist$stats)),
+  t = as.character(bws_hist$t)
+)
+vol.big <- rbind(vol.big, vol.1big.hist, vol.2big.hist) # complete dataframe of big wood with historic and predicted values
+
+vol.sc.hist <- data.frame( # reformatting for merge with modeled vols
+  value = sc_hist$stats,  
+  site = rep('Silver Creek (Historic)', length(sc_hist$stats)),
+  t = as.character(sc_hist$t)
+)
+vol.sc <- rbind(vol.sc, vol.sc.hist) # complete dataframe of silver creek with historic and predicted values
+
+vol.cc.hist <- data.frame( # reformatting for merge with modeled vols
+  value = cc_hist$stats,  
+  site = rep('Camas Creek (Historic)', length(cc_hist$stats)),
+  t = as.character(cc_hist$t)
+)
+vol.cc <- rbind(vol.cc, vol.cc.hist) # complete dataframe of camas creek with historic and predicted values
 #-------------------------------------------------------------------------------------#
 
-exc_prob=dbGetQuery(conn,"SELECT * FROM exceednaceprobabilities;") # note table mispelling, need to fix
+exc_prob=dbGetQuery(conn,"SELECT * FROM exceednaceprobabilities;") # note table misspelling, need to fix
 exc_prob <- exc_prob %>% rename( "Big Wood Hailey" = bwh.irr_vol)
 exc_prob <- exc_prob %>% rename( "Big Wood Stanton" = bws.irr_vol)
 exc_prob <- exc_prob %>% rename( "Camas Creek" = cc.irr_vol)
@@ -163,7 +163,7 @@ gen_bw <- function(vol.big, ex.vols3){
     scale_y_continuous(breaks = round(seq(0, max(vol.big$value, na.rm=TRUE), by = 50),1))+
   
     geom_point(data=ex.vols3[ex.vols3$site !="Silver Creek" & ex.vols3$site !="Camas Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2, shape=21)+
-    scale_color_manual(values=c("black","black","black","black","black"))+
+    scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
     theme_bw(base_size = 14)+
     ggtitle("Historic & Modeled Irrigation Season Volumes (April-Sept.)") +
     labs(fill="", color="Exceedance")+
@@ -174,15 +174,15 @@ gen_bw <- function(vol.big, ex.vols3){
   return(p)
 }
 
-gen_sc <- function(vol.sm,ex.vols3){
-  ps<- ggplot(vol.sm, fill =t, aes(x=site, y=value, fill=site), alpha=0.6) +
+gen_sc <- function(vol.sc,ex.vols3){
+  ps<- ggplot(vol.sc, fill =t, aes(x=site, y=value, fill=site), alpha=0.6) +
     geom_boxplot(outlier.alpha = 0.3) +
-    scale_fill_manual(values=c("royalblue3", "grey90", "royalblue3", "grey90")) +
+    scale_fill_manual(values=c("royalblue3", "grey90")) +
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
-    scale_y_continuous(breaks = round(seq(0, max(vol.sm$value, na.rm=TRUE), by = 10),1))+
+    scale_y_continuous(breaks = round(seq(0, max(vol.sc$value, na.rm=TRUE), by = 10),1))+
     
     geom_point(data=ex.vols3[ex.vols3$site =="Silver Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2, shape=21)+
-    scale_color_manual(values=c("black","black","black","black","black"))+
+    scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
     theme_bw(base_size = 18) +
     ggtitle("") +
     labs(fill="", color="Exceedance")+
@@ -196,18 +196,22 @@ gen_sc <- function(vol.sm,ex.vols3){
 gen_cc <- function(vol.cc, exvols3){
   pc<- ggplot(vol.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
     geom_boxplot(outlier.alpha = 0.3) +
-    scale_fill_manual(values=c("royalblue3", "grey90", "royalblue3", "grey90"))+
+    scale_fill_manual(values=c("royalblue3", "grey90")) +
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
     scale_y_continuous(breaks = round(seq(0, max(vol.cc$value, na.rm=TRUE), by = 40),1))+
     
     geom_point(data=ex.vols3[ex.vols3$site =="Camas Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2, shape=21)+
-    scale_color_manual(values=c("black","black","black","black","black"))+
+    scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
     theme_bw(base_size = 18)+
     ggtitle("") +
     labs(fill="", color="Exceedance")+
     guides(fill = "none", color = "none")+
     xlab("")+
-    ylab("Irrigation Volume (KAF)")
+    ylab("")
+  
+  return(pc)
+}
+
   
   return(pc)
 }
