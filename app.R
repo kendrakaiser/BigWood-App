@@ -10,7 +10,7 @@ if (!require("pacman")) install.packages("pacman")
 pacman::p_load("shinythemes","shiny","RPostgres","DBI","ggplot2","stringr","leaflet","sf","shinyWidgets")
 
 source('functions.r')
-source('plotter.R') 
+#source('plotter.R') 
 conn=scdbConnect()
 
 #base_path <- normalizePath(file.path(dirname(rstudioapi::getActiveDocumentContext()$path), "."))
@@ -101,16 +101,20 @@ ui <- fluidPage(
                  tableOutput("forecasted_vols"), 
                  p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(),
+
                  plotOutput("gen_bw_plot", width = "80%"),
+
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(),
                  div(
+
                    style = "display: flex; justify-content: space-between;",
                    plotOutput("gen_sc_plot", width="45%"),
                    plotOutput("gen_cc_plot", width="45%")
                  ),
                  p('Figure 2: Box plots of Silver Creek and Camas Creek historic and forecasted streamflow'),
+
                ))
     ),
     
