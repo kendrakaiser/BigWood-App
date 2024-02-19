@@ -1,6 +1,7 @@
 # Figures and tables for data analysis and model output from wood river streamflow forecasting
 
 #--------------------------------------------------------------#
+library("dplyr")
 #--------------------------------------------------------------#
 
 pred.yr <<- 2024 # loop back to this
