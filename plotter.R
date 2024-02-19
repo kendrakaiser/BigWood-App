@@ -1,18 +1,7 @@
 # Figures and tables for data analysis and model output from wood river streamflow forecasting
 
-#------------------------------------------------------------------------------
-# Historic condition data
-#TODO: update
-library("magrittr")
-library("tidyr")
-library("ggplot2")
-library("stringr")
-library("dplyr")
-source(file.path('init_db.R'))
-source(file.path('dbIntakeTools.R')) 
-
-conn=scdbConnect() 
-#-----------------------------------------------------------------------------------#
+#--------------------------------------------------------------#
+#--------------------------------------------------------------#
 
 pred.yr <<- 2024 # loop back to this
 sitelabs<- c( "Big Wood Hailey", "Big Wood Stanton", "Camas Creek", "Silver Creek")
@@ -41,13 +30,12 @@ makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;"
   return(bpData)
 }
 
-data_list <- list()
 sites <- c("bwh", "bws", "cc", "sc")
 
 vol_data <- data.frame()
 
 for (site in sites) {
-  query <- sprintf("SELECT * FROM summarystatistics WHERE site = '%s' AND metric = 'irr_vol' AND simdate = '2023-10-01';", site)
+  query <- sprintf("SELECT * FROM summarystatistics WHERE site = '%s' AND simdate = '2023-10-01';", site)
   data <- makeBoxplotData(dbGetQuery(conn, query))
   data$value <- exp(data$stats)/1000
   data$out <- exp(data$out)/1000
@@ -212,6 +200,3 @@ gen_cc <- function(vol.cc, exvols3){
   return(pc)
 }
 
-  
-  return(pc)
-}
