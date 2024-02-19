@@ -241,10 +241,10 @@ server <- function(input, output) {
     gen_bw(vol.big, ex.vols3)  # Call the gen_bw function here to generate the plot
   })
   output$gen_sc_plot <- renderPlot({
-    gen_sc(vol.sm, ex.vols3)  # Call the gen_bw function here to generate the plot
+    gen_sc(vol.sc, ex.vols3)  
   })
   output$gen_cc_plot <- renderPlot({
-    gen_cc(vol.cc, ex.vols3)  # Call the gen_bw function here to generate the plot
+    gen_cc(vol.cc, ex.vols3)  
   })
   output$predPlot <- renderPlot({
     
