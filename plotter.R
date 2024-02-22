@@ -1,10 +1,5 @@
 # Figures and tables for data analysis and model output from wood river streamflow forecasting
 
-#--------------------------------------------------------------#
-library("dplyr")
-library("tidyr")
-#--------------------------------------------------------------#
-
 pred.yr <<- 2024 # loop back to this
 sitelabs<- c( "Big Wood Hailey", "Big Wood Stanton", "Camas Creek", "Silver Creek")
 
