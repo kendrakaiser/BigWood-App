@@ -80,7 +80,7 @@ ui <- fluidPage(
                    in the Big Wood River Basin (above Magic), Camas Creek and Silver Creek.', style = "font-size:1.5vh"),
                  p('', style = "font-size:1.5vh"),
                  br(), div(class = "intro-divider3"), br(),
-
+                 
                  img(
                    class = 'image',
                    style = "max-width: 100%; height: auto; border: 10px solid light grey; margin-right: 30px;",
@@ -101,20 +101,20 @@ ui <- fluidPage(
                  tableOutput("forecasted_vols"), 
                  p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(),
-
+                 
                  plotOutput("gen_bw_plot", width = "80%"),
-
+                 
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
                    The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
                  br(),
                  div(
-
+                   
                    style = "display: flex; justify-content: space-between;",
                    plotOutput("gen_sc_plot", width="45%"),
                    plotOutput("gen_cc_plot", width="45%")
                  ),
                  p('Figure 2: Box plots of Silver Creek and Camas Creek historic and forecasted streamflow'),
-
+                 
                ))
     ),
     
@@ -206,7 +206,8 @@ ui <- fluidPage(
                  #use updateSliderInput to limit range?
                  h4("Select Data Extent:"),
                  leafletOutput("plotExtent",width="auto",height="300px"),
-                 actionButton("makePlot", "Make Plot")
+                 actionButton("makePlot", "Make Plot"),
+                 downloadButton("downloadData","Download Dataset")
                ),
                
                
@@ -289,7 +290,10 @@ server <- function(input, output) {
   
   output$plotExtent = renderLeaflet(dataExtentMap)
   
-  
+  plotData=reactive(getDataByVarTimeExtent(useVars=input$plotVars,
+                                           startDateTime=input$plotDateRange[1],
+                                           endDateTime = input$plotDateRange[2],
+                                           extent=input$plotExtent_bounds))
   
   
   observeEvent(input$makePlot,{
@@ -307,6 +311,14 @@ server <- function(input, output) {
     )
     
   })
+  
+  output$downloadData=downloadHandler(
+    filename=paste0("dataset",".csv"),
+    content=function(file){ 
+      write.csv(plotData(), file)
+    }
+    
+  )
   
   observe({
     locationPoints=getLocationsForVariables(useVars=input$plotVars,
@@ -343,7 +355,7 @@ server <- function(input, output) {
                                               round(min(tf_airTemps())),"°F to ", round(max(tf_airTemps())),"°F.  Highs for this day range from ",
                                               round(min(tf_maxAirTemps())),"°F to ",round(max(tf_maxAirTemps())),"°F.  This forecast simulates a hot but not unusual day with an average temperature of ",
                                               round(quantile(tf_airTemps(),.9)),"°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"°F.")
-
+    
   })
   
   # output$airTempHighsHist=renderPlot({
@@ -460,7 +472,7 @@ server <- function(input, output) {
     
   })
   
-
+  
   
   
   
