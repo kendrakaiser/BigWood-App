@@ -70,19 +70,19 @@ vol.cc <- vol_data[vol_data$site == 'Camas Creek',]
 bwh_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '140' 
                 AND qcstatus = 'TRUE' 
                 AND metricid = '14'
-                AND datetime >= '2003-01-01'")
+                AND datetime >= '1987-10-01'")
 bws_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '141' 
                 AND qcstatus = 'TRUE' 
                 AND metricid = '14'
-                AND datetime >= '2003-01-01'")
+                AND datetime >= '1987-10-01'")
 sc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '144' 
                 AND qcstatus = 'TRUE' 
                 AND metricid = '14'
-                AND datetime >= '2003-01-01'")
+                AND datetime >= '1987-10-01'")
 cc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '167' 
                 AND qcstatus = 'TRUE' 
                 AND metricid = '14'
-                AND datetime >= '2003-01-01'")
+                AND datetime >= '1987-10-01'")
 
 bwh_hist <- boxplot.stats(bwh_hist$value)
 bwh_hist$stats <- bwh_hist$stats/1000
@@ -113,21 +113,21 @@ vol.2big.hist <- data.frame( # reformatting for merge
   site = rep('Big Wood Stanton (Historic)', length(bws_hist$stats)),
   t = as.character(bws_hist$t)
 )
-vol.big <- rbind(vol.big, vol.1big.hist, vol.2big.hist) # complete dataframe of big wood with historic and predicted values
+vol.big <- rbind(vol.1big.hist, vol.2big.hist, vol.big) # complete dataframe of big wood with historic and predicted values
 
 vol.sc.hist <- data.frame( # reformatting for merge with modeled vols
   value = sc_hist$stats,  
   site = rep('Silver Creek (Historic)', length(sc_hist$stats)),
   t = as.character(sc_hist$t)
 )
-vol.sc <- rbind(vol.sc, vol.sc.hist) # complete dataframe of silver creek with historic and predicted values
+vol.sc <- rbind(vol.sc.hist, vol.sc) # complete dataframe of silver creek with historic and predicted values
 
 vol.cc.hist <- data.frame( # reformatting for merge with modeled vols
   value = cc_hist$stats,  
   site = rep('Camas Creek (Historic)', length(cc_hist$stats)),
   t = as.character(cc_hist$t)
 )
-vol.cc <- rbind(vol.cc, vol.cc.hist) # complete dataframe of camas creek with historic and predicted values
+vol.cc <- rbind(vol.cc.hist, vol.cc) # complete dataframe of camas creek with historic and predicted values
 #-------------------------------------------------------------------------------------#
 
 exc_prob=dbGetQuery(conn,"SELECT * FROM exceednaceprobabilities;") # note table misspelling, need to fix
