@@ -21,6 +21,8 @@ conn=scdbConnect()
 #minDateTime=as.Date(dbGetQuery(conn,"SELECT MIN (datetime) FROM data;")$min)
 #maxDateTime=as.Date(dbGetQuery(conn,"SELECT MAX (datetime) FROM data;")$max)
 
+currentModelDate=dbGetQuery(conn,"SELECT MAX(rundate) FROM summarystatistics;")$max
+
 minDateTime=as.Date("1911-01-01")
 maxDateTime=Sys.Date()
 
@@ -54,11 +56,11 @@ getDataByVarTimeExtent=function(useVars,startDateTime,endDateTime,extent){
                "AND data.datetime > '",startDateTime,
                "' AND data.datetime < '",endDateTime,"';")
   
-  print(query)
+  #print(query)
   
   thisData=dbGetQuery(conn,query)
   
-  print(format(object.size(thisData),units="MB"))
+  #print(format(object.size(thisData),units="MB"))
   
   return(thisData)
 }
@@ -73,7 +75,7 @@ getLocationsForVariables=function(useVars,startDate=as.Date("2021-03-01"),endDat
                          " AND data.datetime > '",startDate,
                          "' AND data.datetime < '",endDate,"';")
     
-    print(locationQuery)
+    #print(locationQuery)
     locations=st_read(conn,query = locationQuery)
     
     if(nrow(locations)>=1){
@@ -286,6 +288,8 @@ getTemperatureStats=function(tf_indexFlows,tf_predFlows, airTemp, forecastDate, 
   return(tf_stats)
   
 }
+
+
 
 
 

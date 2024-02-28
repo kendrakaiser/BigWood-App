@@ -97,7 +97,7 @@ ui <- fluidPage(
                # Show a plot of the generated distribution
                mainPanel(
                  br(),
-                 p('Streamflow Forecast for', print(Sys.Date()), style = "font-weight: bolder; font-size: 20px;"), #check to make sure this works, or alt way??
+                 p('Streamflow Forecast for', currentModelDate, style = "font-weight: bolder; font-size: 20px;"), #check to make sure this works, or alt way??
                  tableOutput("forecasted_vols"), 
                  p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(),

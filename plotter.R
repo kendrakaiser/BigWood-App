@@ -21,29 +21,30 @@ makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;"
                        mean(thisData$value[thisData$stat==c("med")]),
                        mean(thisData$value[thisData$stat==c("upper_hinge")]),
                        mean(thisData$value[thisData$stat==c("max")]))
+    bpData$stats[,i]=bpData$stats[,i]/1000 #convert to KAF
     
     bpData$n[i]=mean(thisData$value[thisData$stat==c("n")])
     
-    outliers=thisData$value[thisData$stat==c("outlier")]
+    outliers=thisData$value[thisData$stat==c("outlier")]/1000 #convert to KAF
     bpData$out=c(bpData$out,outliers)
     bpData$group=c(bpData$group,rep(i,length(outliers)))
     
   }
-  
   return(bpData)
 }
 
 sites <- c("bwh", "bws", "cc", "sc")
 
+
 vol_data <- data.frame()
 
 for (site in sites) {
   query <- sprintf("SELECT * FROM summarystatistics WHERE site = '%s' AND simdate = (SELECT MAX(simdate) FROM summarystatistics);", site)
-  data <- makeBoxplotData(dbGetQuery(conn, query))
-  data$value <- data$stats/1000
-  data$out <- data$out/1000
+  bxpData <- makeBoxplotData(dbGetQuery(conn, query))
+  bxpData$value <- bxpData$stats
+  bxpData$out <- bxpData$out
   
-  extra_rows <- data.frame(value = data$value, site = rep(site, length(data$value)))
+  extra_rows <- data.frame(value = bxpData$value, site = rep(site, length(bxpData$value)))
   vol_data <- rbind(vol_data, extra_rows)
   vol_data <- unique(vol_data)
 }
@@ -74,27 +75,29 @@ vol.cc <- vol_data[vol_data$site == 'Camas Creek',]
 #     cc <- 167
 #-----------------------------------------------------------------------------------#
 #TODO add requirement that enough days are in the calc to sufficiently capture the water year
-hist_irrAF <- dbGetQuery(conn,"SELECT wateryear(datetime) AS wateryear, metric, SUM(value)*1.98 AS irr_vol, data.locationid, name, sitenote
-           FROM data LEFT JOIN locations ON data.locationid = locations.locationid
-           WHERE metric = 'streamflow' AND qcstatus = 'true' AND (EXTRACT(month FROM datetime) >= 4 AND EXTRACT(month FROM datetime) < 10) 
-           GROUP BY(wateryear, data.locationid, metric, locations.name, locations.sitenote) ORDER BY wateryear;")
-bwh_histAF<- hist_irrAF[hist_irrAF$sitenote== 'bwh',]
-bws_histAF <- hist_irrAF[hist_irrAF$sitenote== 'bws',]
-sc_histAF <- hist_irrAF[hist_irrAF$sitenote== 'sc',]
-cc_histAF <- hist_irrAF[hist_irrAF$sitenote== 'cc',]
 
-bwh_hist <- boxplot.stats(bwh_histAF$irr_vol)
-bwh_hist$stats <- bwh_hist$stats/1000
+hist_irr <- dbGetQuery(conn," SELECT * FROM (SELECT wateryear(datetime) AS wateryear, metric, SUM(value)*1.98/1000 AS irr_vol, data.locationid, name, sitenote, COUNT(DISTINCT( dataid)) AS days_in_record
+           FROM data LEFT JOIN locations ON data.locationid = locations.locationid
+           WHERE metric = 'streamflow' AND qcstatus = 'true' AND (EXTRACT(month FROM datetime) >= 4 AND EXTRACT(month FROM datetime) < 10)
+           GROUP BY(wateryear, data.locationid, metric, locations.name, locations.sitenote) ORDER BY wateryear) as histvols WHERE days_in_record > 180;")  # complete record is 183 days
+
+
+
+bwh_hist<- hist_irr[hist_irr$sitenote== 'bwh',]
+bws_hist <- hist_irr[hist_irr$sitenote== 'bws',]
+sc_hist <- hist_irr[hist_irr$sitenote== 'sc',]
+cc_hist <- hist_irr[hist_irr$sitenote== 'cc',]
+
+bwh_hist <- boxplot.stats(bwh_hist$irr_vol)
 bwh_hist$t <- 'Historic'
-bws_hist <- boxplot.stats(bws_histAF$irr_vol)
-bws_hist$stats <- bws_hist$stats/1000
+
+bws_hist <- boxplot.stats(bws_hist$irr_vol)
 bws_hist$t <- 'Historic'
 
-sc_hist <- boxplot.stats(sc_histAF$irr_vol)
-sc_hist$stats <- sc_hist$stats/1000
+sc_hist <- boxplot.stats(sc_hist$irr_vol)
 sc_hist$t <- 'Historic'
-cc_hist <- boxplot.stats(cc_histAF$irr_vol)
-cc_hist$stats <- cc_hist$stats/1000
+
+cc_hist <- boxplot.stats(cc_hist$irr_vol)
 cc_hist$t <- 'Historic'
 
 bwh_hist$t <- factor(bwh_hist$t)
@@ -103,26 +106,26 @@ sc_hist$t <- factor(sc_hist$t)
 cc_hist$t <- factor(cc_hist$t)
 
 vol.1big.hist <- data.frame( # reformatting for merge with modeled vols
-  value = bwh_hist$stats,  
+  value = bwh_hist$stats,
   site = rep('Big Wood Hailey (Historic)', length(bwh_hist$stats)),
   t = as.character(bwh_hist$t)
 )
 vol.2big.hist <- data.frame( # reformatting for merge
-  value = bws_hist$stats,  
+  value = bws_hist$stats,
   site = rep('Big Wood Stanton (Historic)', length(bws_hist$stats)),
   t = as.character(bws_hist$t)
 )
 vol.big <- rbind(vol.1big.hist, vol.2big.hist, vol.big) # complete dataframe of big wood with historic and predicted values
 
 vol.sc.hist <- data.frame( # reformatting for merge with modeled vols
-  value = sc_hist$stats,  
+  value = sc_hist$stats,
   site = rep('Silver Creek (Historic)', length(sc_hist$stats)),
   t = as.character(sc_hist$t)
 )
 vol.sc <- rbind(vol.sc.hist, vol.sc) # complete dataframe of silver creek with historic and predicted values
 
 vol.cc.hist <- data.frame( # reformatting for merge with modeled vols
-  value = cc_hist$stats,  
+  value = cc_hist$stats,
   site = rep('Camas Creek (Historic)', length(cc_hist$stats)),
   t = as.character(cc_hist$t)
 )
@@ -145,7 +148,7 @@ gen_bw <- function(vol.big, ex.vols3){
     scale_fill_manual(values=c("royalblue3", "grey90","royalblue3", "grey90")) +
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
     scale_y_continuous(breaks = round(seq(0, max(vol.big$value, na.rm=TRUE), by = 50),1))+
-  
+    
     geom_point(data=ex.vols3[ex.vols3$site !="Silver Creek" & ex.vols3$site !="Camas Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2, shape=21)+
     scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
     theme_bw(base_size = 14)+
@@ -154,9 +157,47 @@ gen_bw <- function(vol.big, ex.vols3){
     guides(fill = "none", color = "none") +
     xlab("")+
     ylab("Irrigation Season Volume (KAF)")
-
+  
   return(p)
 }
+
+#gen_bw_bxp=function()
+
+mergeBxpLists=function(...){
+  allLists=list(...)
+  baseList=allLists[[1]]
+  baseList$conf=NULL
+  baseList$group=rep(1,length(baseList$out))
+  if(is.null(baseList$names)){
+    baseList$names="group1"
+  }
+  
+  for (i in 2:length(allLists)){
+    thisStats=matrix(allLists[[i]]$stats,ncol=1)
+    baseList$stats=cbind(baseList$stats,allLists[[i]]$stats)
+    baseList$n=c(baseList$n,allLists[[i]]$n)
+    baseList$out=c(baseList$out,allLists[[i]]$out)
+    baseList$group=c(baseList$group,rep(i,length(allLists[[i]]$out)) )
+    if(is.null(allLists[[i]]$names)){
+      allLists[[i]]$names=paste0("group",i)
+    }
+    baseList$names=c(baseList$names,allLists[[i]]$names)
+  }
+  return(baseList)
+}
+
+
+
+bw_bxpList=mergeBxpLists(boxplot.stats(hist_irr$irr_vol[hist_irr$sitenote== 'bwh']),
+                         makeBoxplotData(dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site = 'bwh' AND simdate = (SELECT MAX(simdate) FROM summarystatistics);")),
+                         boxplot.stats(hist_irr$irr_vol[hist_irr$sitenote== 'bws']),
+                         makeBoxplotData(dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site = 'bwh' AND simdate = (SELECT MAX(simdate) FROM summarystatistics);"))
+)
+
+bxp(bw_bxpList,names=c("BWH","BWH_P","BWS","BWS_P"),show.names = F, border=c("royalblue3", "grey60"))
+axis(1, at=1:4, labels=c("BWH","BWH_Predict","BWS","BWS_Predict"))
+
+
 
 gen_sc <- function(vol.sc,ex.vols3){
   ps<- ggplot(vol.sc, fill =t, aes(x=site, y=value, fill=site), alpha=0.6) +
@@ -195,4 +236,6 @@ gen_cc <- function(vol.cc, ex.vols3){
   
   return(pc)
 }
+
+
 
