@@ -73,34 +73,27 @@ vol.cc <- vol_data[vol_data$site == 'Camas Creek',]
 #     sc <- 163
 #     cc <- 167
 #-----------------------------------------------------------------------------------#
-bwh_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '140' 
-                AND qcstatus = 'TRUE' 
-                AND metricid = '14'
-                AND datetime >= '2003-01-01'")
-bws_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '141' 
-                AND qcstatus = 'TRUE' 
-                AND metricid = '14'
-                AND datetime >= '2003-01-01'")
-sc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '144' 
-                AND qcstatus = 'TRUE' 
-                AND metricid = '14'
-                AND datetime >= '2003-01-01'")
-cc_hist <- dbGetQuery(conn,"SELECT * FROM data WHERE locationid = '167' 
-                AND qcstatus = 'TRUE' 
-                AND metricid = '14'
-                AND datetime >= '2003-01-01'")
+#TODO add requirement that enough days are in the calc to sufficiently capture the water year
+hist_irrAF <- dbGetQuery(conn,"SELECT wateryear(datetime) AS wateryear, metric, SUM(value)*1.98 AS irr_vol, data.locationid, name, sitenote
+           FROM data LEFT JOIN locations ON data.locationid = locations.locationid
+           WHERE metric = 'streamflow' AND qcstatus = 'true' AND (EXTRACT(month FROM datetime) >= 4 AND EXTRACT(month FROM datetime) < 10) 
+           GROUP BY(wateryear, data.locationid, metric, locations.name, locations.sitenote) ORDER BY wateryear;")
+bwh_histAF<- hist_irrAF[hist_irrAF$sitenote== 'bwh',]
+bws_histAF <- hist_irrAF[hist_irrAF$sitenote== 'bws',]
+sc_histAF <- hist_irrAF[hist_irrAF$sitenote== 'sc',]
+cc_histAF <- hist_irrAF[hist_irrAF$sitenote== 'cc',]
 
-bwh_hist <- boxplot.stats(bwh_hist$value)
+bwh_hist <- boxplot.stats(bwh_histAF$irr_vol)
 bwh_hist$stats <- bwh_hist$stats/1000
 bwh_hist$t <- 'Historic'
-bws_hist <- boxplot.stats(bws_hist$value)
+bws_hist <- boxplot.stats(bws_histAF$irr_vol)
 bws_hist$stats <- bws_hist$stats/1000
 bws_hist$t <- 'Historic'
 
-sc_hist <- boxplot.stats(sc_hist$value)
+sc_hist <- boxplot.stats(sc_histAF$irr_vol)
 sc_hist$stats <- sc_hist$stats/1000
 sc_hist$t <- 'Historic'
-cc_hist <- boxplot.stats(cc_hist$value)
+cc_hist <- boxplot.stats(cc_histAF$irr_vol)
 cc_hist$stats <- cc_hist$stats/1000
 cc_hist$t <- 'Historic'
 
