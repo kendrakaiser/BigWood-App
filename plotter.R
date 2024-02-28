@@ -9,14 +9,20 @@ makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;"
   for(i in 1:nrow(groups)){
     thisName=paste0(groups[i,"site"],".",groups[i,"metric"],"_simDate:",groups[i,"simdate"],"_runDate:",groups[i,"rundate"])
     bpData$names[i]=thisName
-    thisData=merge(groups[i,],dbdf)
-    bpData$stats[,i]=c(thisData$value[thisData$stat==c("min")],
-                       thisData$value[thisData$stat==c("lower_hinge")],
-                       thisData$value[thisData$stat==c("med")],
-                       thisData$value[thisData$stat==c("upper_hinge")],
-                       thisData$value[thisData$stat==c("max")])
+    thisData=merge(groups[i,],dbdf, all=F)
+    thisData$ssid=NULL#drop this column so unique works
+    thisData=unique(thisData) # drop duplicate records (from multiple model runs on the same day)
+    #if there are still multiple model runs on the same days(simdate and rundate), warn but proceed
+    if(length(thisData$value[thisData$stat==c("min")])!=1 ){
+      warning("multiple model outputs found for: \n",paste(capture.output(print(groups[i,])),collapse="\n"))
+    }
+    bpData$stats[,i]=c(mean(thisData$value[thisData$stat==c("min")]),
+                       mean(thisData$value[thisData$stat==c("lower_hinge")]),
+                       mean(thisData$value[thisData$stat==c("med")]),
+                       mean(thisData$value[thisData$stat==c("upper_hinge")]),
+                       mean(thisData$value[thisData$stat==c("max")]))
     
-    bpData$n[i]=thisData$value[thisData$stat==c("n")]
+    bpData$n[i]=mean(thisData$value[thisData$stat==c("n")])
     
     outliers=thisData$value[thisData$stat==c("outlier")]
     bpData$out=c(bpData$out,outliers)
@@ -32,10 +38,10 @@ sites <- c("bwh", "bws", "cc", "sc")
 vol_data <- data.frame()
 
 for (site in sites) {
-  query <- sprintf("SELECT * FROM summarystatistics WHERE site = '%s' AND simdate = '2023-10-01';", site)
+  query <- sprintf("SELECT * FROM summarystatistics WHERE site = '%s' AND simdate = (SELECT MAX(simdate) FROM summarystatistics);", site)
   data <- makeBoxplotData(dbGetQuery(conn, query))
-  data$value <- exp(data$stats)/1000
-  data$out <- exp(data$out)/1000
+  data$value <- data$stats/1000
+  data$out <- data$out/1000
   
   extra_rows <- data.frame(value = data$value, site = rep(site, length(data$value)))
   vol_data <- rbind(vol_data, extra_rows)
@@ -113,21 +119,21 @@ vol.2big.hist <- data.frame( # reformatting for merge
   site = rep('Big Wood Stanton (Historic)', length(bws_hist$stats)),
   t = as.character(bws_hist$t)
 )
-vol.big <- rbind(vol.big, vol.1big.hist, vol.2big.hist) # complete dataframe of big wood with historic and predicted values
+vol.big <- rbind(vol.1big.hist, vol.2big.hist, vol.big) # complete dataframe of big wood with historic and predicted values
 
 vol.sc.hist <- data.frame( # reformatting for merge with modeled vols
   value = sc_hist$stats,  
   site = rep('Silver Creek (Historic)', length(sc_hist$stats)),
   t = as.character(sc_hist$t)
 )
-vol.sc <- rbind(vol.sc, vol.sc.hist) # complete dataframe of silver creek with historic and predicted values
+vol.sc <- rbind(vol.sc.hist, vol.sc) # complete dataframe of silver creek with historic and predicted values
 
 vol.cc.hist <- data.frame( # reformatting for merge with modeled vols
   value = cc_hist$stats,  
   site = rep('Camas Creek (Historic)', length(cc_hist$stats)),
   t = as.character(cc_hist$t)
 )
-vol.cc <- rbind(vol.cc, vol.cc.hist) # complete dataframe of camas creek with historic and predicted values
+vol.cc <- rbind(vol.cc.hist, vol.cc) # complete dataframe of camas creek with historic and predicted values
 #-------------------------------------------------------------------------------------#
 
 exc_prob=dbGetQuery(conn,"SELECT * FROM exceednaceprobabilities;") # note table misspelling, need to fix
@@ -178,7 +184,7 @@ gen_sc <- function(vol.sc,ex.vols3){
   return(ps)
 }
 
-gen_cc <- function(vol.cc, exvols3){
+gen_cc <- function(vol.cc, ex.vols3){
   pc<- ggplot(vol.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
     geom_boxplot(outlier.alpha = 0.3) +
     scale_fill_manual(values=c("royalblue3", "grey90")) +
