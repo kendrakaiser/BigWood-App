@@ -54,7 +54,8 @@ getDataByVarTimeExtent=function(useVars,startDateTime,endDateTime,extent){
                "AND ST_Within(locations.geometry, ST_Polygon('",
                print(extBox[[1]]),"'::geometry, 26911) ) ",
                "AND data.datetime > '",startDateTime,
-               "' AND data.datetime < '",endDateTime,"';")
+               "' AND data.datetime < '",endDateTime,"'
+               AND data.qcstatus='true';")
   
   #print(query)
   
@@ -73,7 +74,8 @@ getLocationsForVariables=function(useVars,startDate=as.Date("2021-03-01"),endDat
                          "FROM locations LEFT JOIN data ON locations.locationid = data.locationid WHERE data.metric IN ('",
                          paste0(useVars,collapse="', '"),"')",
                          " AND data.datetime > '",startDate,
-                         "' AND data.datetime < '",endDate,"';")
+                         "' AND data.datetime < '",endDate,"'
+                         AND data.qcstatus='true';")
     
     #print(locationQuery)
     locations=st_read(conn,query = locationQuery)
@@ -140,7 +142,7 @@ getAllIcons=function(locationDF){
 globalColorOrder=c("red", "orange", "green", "blue", "purple", "pink", "gray", "cadetblue", "lightgreen", "lightblue")
 
 #defaults are for easy development and debug
-plotAll=function(plotData=dbGetQuery(conn,"SELECT data.metric, data.value, data.datetime, data.locationid FROM data INNER JOIN locations ON data.locationid = locations.locationid WHERE data.metric IN ('flow', 'Water Temperature', 'Dissolved Oxygen') AND ST_Within(locations.geometry, ST_Polygon('LINESTRING (749004.1 4786269, 733100.8 4785705, 732814.7 4794040, 748698.5 4794604, 749004.1 4786269)'::geometry, 26911) ) AND data.datetime > '2021-06-01' AND data.datetime < '2021-07-01';")){
+plotAll=function(plotData=dbGetQuery(conn,"SELECT data.metric, data.value, data.datetime, data.locationid FROM data INNER JOIN locations ON data.locationid = locations.locationid WHERE data.metric IN ('flow', 'Water Temperature', 'Dissolved Oxygen') AND ST_Within(locations.geometry, ST_Polygon('LINESTRING (749004.1 4786269, 733100.8 4785705, 732814.7 4794040, 748698.5 4794604, 749004.1 4786269)'::geometry, 26911) ) AND data.datetime > '2021-06-01' AND data.datetime < '2021-07-01' AND data.qcstatus='T';")){
   
   plotData=addRepFromLocationIDs(plotData)
   
@@ -195,13 +197,13 @@ getAirTempsByDate=function(tf_date,high=F, airTempReferenceLocation=180){
     airTemps=dbGetQuery(conn, paste0("SELECT max(value) AS high FROM data WHERE locationid = '",airTempReferenceLocation,"'
                           AND metric = 'air temperature'
                           AND DATE_PART('doy',datetime) = '",doy,"'
-                          AND qcstatus='T'
+                          AND qcstatus='true'
                              GROUP BY datetime::date;"))$high
   } else {
     airTemps=dbGetQuery(conn, paste0("SELECT avg(value) AS avg FROM data WHERE locationid = '",airTempReferenceLocation,"' 
                           AND metric = 'air temperature' 
                           AND DATE_PART('doy',datetime) = '",doy,"'
-                          AND qcstatus='T'
+                          AND qcstatus='true'
                              GROUP BY datetime::date;"))$avg
   }
   
@@ -216,7 +218,7 @@ getIndexFlowsByDate=function(tf_date, indexFlowLocation=144){
   indexFlows=dbGetQuery(conn, paste0("SELECT avg(value) AS flow FROM data WHERE locationid = '",indexFlowLocation,"' 
                           AND metric = 'flow' 
                           AND DATE_PART('doy',datetime) = '",doy,"'
-                          AND qcstatus = 'T'
+                          AND qcstatus = 'true'
                              GROUP BY datetime::date;"))$flow
   return(indexFlows)
 }

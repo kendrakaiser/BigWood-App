@@ -21,11 +21,11 @@ makeBoxplotData=function(dbdf=dbGetQuery(conn,"SELECT * FROM summarystatistics;"
                        mean(thisData$value[thisData$stat==c("med")]),
                        mean(thisData$value[thisData$stat==c("upper_hinge")]),
                        mean(thisData$value[thisData$stat==c("max")]))
-    bpData$stats[,i]=bpData$stats[,i]/1000 #convert to KAF
+    bpData$stats[,i]=bpData$stats[,i]
     
     bpData$n[i]=mean(thisData$value[thisData$stat==c("n")])
     
-    outliers=thisData$value[thisData$stat==c("outlier")]/1000 #convert to KAF
+    outliers=thisData$value[thisData$stat==c("outlier")]
     bpData$out=c(bpData$out,outliers)
     bpData$group=c(bpData$group,rep(i,length(outliers)))
     
@@ -41,8 +41,8 @@ vol_data <- data.frame()
 for (site in sites) {
   query <- sprintf("SELECT * FROM summarystatistics WHERE site = '%s' AND simdate = (SELECT MAX(simdate) FROM summarystatistics);", site)
   bxpData <- makeBoxplotData(dbGetQuery(conn, query))
-  bxpData$value <- bxpData$stats
-  bxpData$out <- bxpData$out
+  bxpData$value <- bxpData$stats/1000
+  bxpData$out <- bxpData$out/1000
   
   extra_rows <- data.frame(value = bxpData$value, site = rep(site, length(bxpData$value)))
   vol_data <- rbind(vol_data, extra_rows)
@@ -138,16 +138,18 @@ exc_prob <- exc_prob %>% rename( "Silver Creek" = sc.irr_vol)
 prb<- c(0.1, 0.25, 0.5, 0.75, 0.9)
 ex.vols3 <- exc_prob %>%pivot_longer(!Exceedance, names_to="site", values_to="value")
 #-------------------------------------------------------------------------------------#
-colfunc<-colorRampPalette(c("red","darkorange","green3","deepskyblue", "blue3"))
+#colfunc<-colorRamp(c("red","darkorange","green3","deepskyblue", "blue3"))
+
+vol.big$site=factor(vol.big$site, levels=c("Big Wood Hailey (Historic)", "Big Wood Hailey", "Big Wood Stanton (Historic)", "Big Wood Stanton")) #this sets the order for the boxplot
 
 gen_bw <- function(vol.big, ex.vols3){
   p<-ggplot(vol.big, fill=t, aes(x=site, y=value, fill=site), alpha=0.6) +
-    geom_boxplot(outlier.alpha = 0.3) +
+    geom_boxplot(outlier.alpha = .3) +  #outliers are not actually drawn
     scale_fill_manual(values=c("royalblue3", "grey90","royalblue3", "grey90")) +
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
     scale_y_continuous(breaks = round(seq(0, max(vol.big$value, na.rm=TRUE), by = 50),1))+
     
-    geom_point(data=ex.vols3[ex.vols3$site !="Silver Creek" & ex.vols3$site !="Camas Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2, shape=21)+
+    geom_point(data=ex.vols3[ex.vols3$site !="Silver Creek" & ex.vols3$site !="Camas Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2.5, shape=15)+
     scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
     theme_bw(base_size = 14)+
     ggtitle("Historic & Modeled Irrigation Season Volumes (April-Sept.)") +
@@ -161,6 +163,7 @@ gen_bw <- function(vol.big, ex.vols3){
 
 
 
+vol.sc$site=factor(vol.sc$site, levels=c("Silver Creek (Historic)", "Silver Creek"))
 
 gen_sc <- function(vol.sc,ex.vols3){
   ps<- ggplot(vol.sc, fill =t, aes(x=site, y=value, fill=site), alpha=0.6) +
@@ -169,7 +172,7 @@ gen_sc <- function(vol.sc,ex.vols3){
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
     scale_y_continuous(breaks = round(seq(0, max(vol.sc$value, na.rm=TRUE), by = 10),1))+
     
-    geom_point(data=ex.vols3[ex.vols3$site =="Silver Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2, shape=21)+
+    geom_point(data=ex.vols3[ex.vols3$site =="Silver Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2.5, shape=15)+
     scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
     theme_bw(base_size = 18) +
     ggtitle("") +
@@ -181,6 +184,9 @@ gen_sc <- function(vol.sc,ex.vols3){
   return(ps)
 }
 
+vol.cc$site=factor(vol.cc$site, levels=c("Camas Creek (Historic)", "Camas Creek"))
+
+
 gen_cc <- function(vol.cc, ex.vols3){
   pc<- ggplot(vol.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
     geom_boxplot(outlier.alpha = 0.3) +
@@ -188,7 +194,7 @@ gen_cc <- function(vol.cc, ex.vols3){
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
     scale_y_continuous(breaks = round(seq(0, max(vol.cc$value, na.rm=TRUE), by = 40),1))+
     
-    geom_point(data=ex.vols3[ex.vols3$site =="Camas Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2, shape=21)+
+    geom_point(data=ex.vols3[ex.vols3$site =="Camas Creek",], aes(x=site, y=value, color=as.factor(Exceedance)), size=2.5, shape=15)+
     scale_color_manual(values=c("blue3", "deepskyblue", "green3","darkorange","red"))+
     theme_bw(base_size = 18)+
     ggtitle("") +

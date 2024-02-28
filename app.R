@@ -102,14 +102,14 @@ ui <- fluidPage(
                  p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(),
                  
-                 plotOutput("gen_bw_plot", width = "80%"),
+                 plotOutput("gen_bw_plot", width = "90%"),
                  
-                 p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the predicted range of volumes (grey) that were calculated for each gage. 
-                   The boxes represent the 25th - 75th percentiles, the median is the solid line in the middle, and circles are outliers.', style = "font-size:1.5vh"),
+                 p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the forecasted range of volumes (grey) for each gage. 
+                   The boxes represent the 25th - 75th percentiles and the solid line in the middle is the median forecasted value.', style = "font-size:1.5vh"),
                  br(),
                  div(
                    
-                   style = "display: flex; justify-content: space-between;",
+                   style = "display: flex; justify-content: space-evenly;",
                    plotOutput("gen_sc_plot", width="45%"),
                    plotOutput("gen_cc_plot", width="45%")
                  ),
@@ -276,72 +276,6 @@ server <- function(input, output) {
       theme(axis.text=element_text(size=15), axis.title = element_text(size = 20))
   })
   
-  ############### data explorer ---------
-  #map for defining data viz extent
-  
-  dataExtentMap = leaflet( leafletOptions(leafletCRS(crsClass="L.CRS.EPSG4326")) )
-  
-  dataExtentMap = setView(map=dataExtentMap,lng=-114.15,lat=43.33,zoom=12)
-  
-  dataExtentMap = addWMSTiles(map=dataExtentMap,baseUrl="https://basemap.nationalmap.gov/arcgis/services/USGSImageryOnly/MapServer/WmsServer",
-                              layers=0,
-                              attribution = 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>',
-                              tileOptions(zIndex=1))
-  
-  output$plotExtent = renderLeaflet(dataExtentMap)
-  
-  plotData=reactive(getDataByVarTimeExtent(useVars=input$plotVars,
-                                           startDateTime=input$plotDateRange[1],
-                                           endDateTime = input$plotDateRange[2],
-                                           extent=input$plotExtent_bounds))
-  
-  
-  observeEvent(input$makePlot,{
-    plotData=getDataByVarTimeExtent(useVars=input$plotVars,
-                                    startDateTime=input$plotDateRange[1],
-                                    endDateTime = input$plotDateRange[2],
-                                    extent=input$plotExtent_bounds)
-    #print(head(plotData))
-    
-    output$dataPlot=renderPlot(
-      if(nrow(plotData)>1){
-        #plot(plotData$value~plotData$datetime)
-        plotAll(plotData)
-      }
-    )
-    
-  })
-  
-  output$downloadData=downloadHandler(
-    filename=paste0("dataset",".csv"),
-    content=function(file){ 
-      write.csv(plotData(), file)
-    }
-    
-  )
-  
-  observe({
-    locationPoints=getLocationsForVariables(useVars=input$plotVars,
-                                            startDate=input$plotDateRange[1],
-                                            endDate=input$plotDateRange[2])
-    if(!is.null(locationPoints)){
-      allIcons=getAllIcons(locationDF=locationPoints)
-      #print(allIcons)
-      #print(head(locationPoints))
-      leafletProxy("plotExtent") %>% 
-        clearGroup("dataLocationPoints") %>%
-        addAwesomeMarkers(
-          data=locationPoints,
-          group="dataLocationPoints",
-          icon=allIcons[locationPoints$iconName],
-          popup=~sitenote)
-      
-    } else {
-      leafletProxy("plotExtent") %>% 
-        clearGroup("dataLocationPoints")
-    }
-  })# end of observe for locationPoints
-  
   
   ############# temperature forecasting tool -----------
   
@@ -471,6 +405,74 @@ server <- function(input, output) {
     }, width=500, height=350)
     
   })
+  
+  
+  ############### data explorer ---------
+  #map for defining data viz extent
+  
+  dataExtentMap = leaflet( leafletOptions(leafletCRS(crsClass="L.CRS.EPSG4326")) )
+  
+  dataExtentMap = setView(map=dataExtentMap,lng=-114.15,lat=43.33,zoom=12)
+  
+  dataExtentMap = addWMSTiles(map=dataExtentMap,baseUrl="https://basemap.nationalmap.gov/arcgis/services/USGSImageryOnly/MapServer/WmsServer",
+                              layers=0,
+                              attribution = 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>',
+                              tileOptions(zIndex=1))
+  
+  output$plotExtent = renderLeaflet(dataExtentMap)
+  
+  plotData=reactive(getDataByVarTimeExtent(useVars=input$plotVars,
+                                           startDateTime=input$plotDateRange[1],
+                                           endDateTime = input$plotDateRange[2],
+                                           extent=input$plotExtent_bounds))
+  
+  
+  observeEvent(input$makePlot,{
+    plotData=getDataByVarTimeExtent(useVars=input$plotVars,
+                                    startDateTime=input$plotDateRange[1],
+                                    endDateTime = input$plotDateRange[2],
+                                    extent=input$plotExtent_bounds)
+    #print(head(plotData))
+    
+    output$dataPlot=renderPlot(
+      if(nrow(plotData)>1){
+        #plot(plotData$value~plotData$datetime)
+        plotAll(plotData)
+      }
+    )
+    
+  })
+  
+  output$downloadData=downloadHandler(
+    filename=paste0("dataset",".csv"),
+    content=function(file){ 
+      write.csv(plotData(), file)
+    }
+    
+  )
+  
+  observe({
+    locationPoints=getLocationsForVariables(useVars=input$plotVars,
+                                            startDate=input$plotDateRange[1],
+                                            endDate=input$plotDateRange[2])
+    if(!is.null(locationPoints)){
+      allIcons=getAllIcons(locationDF=locationPoints)
+      #print(allIcons)
+      #print(head(locationPoints))
+      leafletProxy("plotExtent") %>% 
+        clearGroup("dataLocationPoints") %>%
+        addAwesomeMarkers(
+          data=locationPoints,
+          group="dataLocationPoints",
+          icon=allIcons[locationPoints$iconName],
+          popup=~sitenote)
+      
+    } else {
+      leafletProxy("plotExtent") %>% 
+        clearGroup("dataLocationPoints")
+    }
+  })# end of observe for locationPoints
+  
   
   
   

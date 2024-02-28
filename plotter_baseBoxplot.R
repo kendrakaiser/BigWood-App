@@ -54,7 +54,6 @@ mergeBxpLists=function(...){
 }
 
 
-
 hist_irr <- dbGetQuery(conn," SELECT * FROM (SELECT wateryear(datetime) AS wateryear, metric, SUM(value)*1.98/1000 AS irr_vol, data.locationid, name, sitenote, COUNT(DISTINCT( dataid)) AS days_in_record
            FROM data LEFT JOIN locations ON data.locationid = locations.locationid
            WHERE metric = 'streamflow' AND qcstatus = 'true' AND (EXTRACT(month FROM datetime) >= 4 AND EXTRACT(month FROM datetime) < 10)
