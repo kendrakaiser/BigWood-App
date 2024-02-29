@@ -121,6 +121,13 @@ ui <- fluidPage(
                    plotOutput("histbws", width="50%")
                  ),
                  p('Figure 3: Historical forecasted streamflows for Big Wood Hailey and Big Wood Stanton'),
+                 div(
+                   
+                   style = "display: flex; justify-content: space-between;",
+                   plotOutput("histcc", width="50%"),
+                   plotOutput("histsc", width="50%")
+                 ),
+                 p('Figure 4: Historical forecasted streamflows for Camas Creek and Silver Creek'),
                ))
     ),
     
