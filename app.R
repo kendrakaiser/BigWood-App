@@ -231,7 +231,7 @@ server <- function(input, output) {
   #output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"), digits = 0)
  
   output$forecasted_vols <- renderTable(dbGetQuery(conn,'SELECT "Exceedance", "bwh.irr_vol" AS "Big Wood at Hailey", "bws.irr_vol" AS "Big Wood at Stanton", "sc.irr_vol" AS "Silver Creek", "cc.irr_vol" AS "Camas Creek" FROM exceednaceprobabilities;'),
-                                        width="80%") # note table misspelling, need to fix
+                                        width="90%", digits=0) # note table misspelling, need to fix
   
   #this will all go in the ui side for user to select timescale (stream flow model output will be static though)
   # useLocations=dbGetQuery(conn, "SELECT locationid, name FROM locations WHERE locations.name IN ('BIG WOOD RIVER AT HAILEY', 'BIG WOOD RIVER AT STANTON CROSSING', 'CAMAS CREEK NR BLAINE ID' );")
