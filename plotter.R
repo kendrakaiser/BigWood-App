@@ -178,7 +178,7 @@ gen_sc <- function(vol.sc,ex.vols3){
 }
 
 gen_cc <- function(vol.cc, exvols3){
-  pc<- ggplot(vol1.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
+  pc<- ggplot(vol.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
     geom_boxplot(outlier.alpha = 0.3) +
     scale_fill_manual(values=c("royalblue3", "grey90")) +
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
