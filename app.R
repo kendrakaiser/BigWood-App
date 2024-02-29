@@ -7,7 +7,7 @@
 # Sys.setenv(scdb_readPass="")
 
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load("shinythemes","shiny","RPostgres","DBI","ggplot2","stringr","leaflet","sf","shinyWidgets")
+pacman::p_load("shinythemes","shiny","RPostgres","DBI","ggplot2","stringr","leaflet","sf","shinyWidgets","dplyr", "tidyr")
 
 source('functions.r')
 source('plotter.R') 
@@ -114,7 +114,13 @@ ui <- fluidPage(
                    plotOutput("gen_cc_plot", width="45%")
                  ),
                  p('Figure 2: Box plots of Silver Creek and Camas Creek historic and forecasted streamflow'),
-
+                 div(
+                   
+                   style = "display: flex; justify-content: space-between;",
+                   plotOutput("histbwh", width="50%"),
+                   plotOutput("histbws", width="50%")
+                 ),
+                 p('Figure 3: Historical forecasted streamflows for Big Wood Hailey and Big Wood Stanton'),
                ))
     ),
     
@@ -250,6 +256,20 @@ server <- function(input, output) {
   output$gen_cc_plot <- renderPlot({
     gen_cc(vol.cc, ex.vols3)  
   })
+  
+  output$histbwh <- renderPlot({
+    histbwh()  
+  })
+  output$histbws <- renderPlot({
+    histbws()  
+  })
+  output$histcc <- renderPlot({
+    histcc()  
+  })
+  output$histsc <- renderPlot({
+    histsc()  
+  })
+  
   output$predPlot <- renderPlot({
     
     # is there a better way to do this? 
@@ -340,9 +360,9 @@ server <- function(input, output) {
   
   output$tf_airTempDisplay=renderText({paste0("Daily average average air temperatures at the Picabo AgriMet station for ",
                                               format.Date(input$tf_date,"%B "), as.numeric(format.Date(input$tf_date, "%d"))," range from ",
-                                              round(min(tf_airTemps())),"°F to ", round(max(tf_airTemps())),"°F.  Highs for this day range from ",
-                                              round(min(tf_maxAirTemps())),"°F to ",round(max(tf_maxAirTemps())),"°F.  This forecast simulates a hot but not unusual day with an average temperature of ",
-                                              round(quantile(tf_airTemps(),.9)),"°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"°F.")
+                                              round(min(tf_airTemps())),"Â°F to ", round(max(tf_airTemps())),"Â°F.  Highs for this day range from ",
+                                              round(min(tf_maxAirTemps())),"Â°F to ",round(max(tf_maxAirTemps())),"Â°F.  This forecast simulates a hot but not unusual day with an average temperature of ",
+                                              round(quantile(tf_airTemps(),.9)),"Â°F and a high temperature of ",round(quantile(tf_maxAirTemps(),.9)),"Â°F.")
 
   })
   
@@ -451,7 +471,7 @@ server <- function(input, output) {
       par(new=T)
       plot(isolate(tf_stats()$pctAbove65)~isolate(tf_stats()$indexFlow), type="l", axes=F, ylab="",xlab="",col="seashell4",lwd=2,lty=2,ylim=c(0,100))
       axis(side=4,col="seashell4",lwd=2,lty=2)
-      mtext("Percent of network above 65°F", side = 4, line=3, col="seashell4")
+      mtext("Percent of network above 65Â°F", side = 4, line=3, col="seashell4")
       abline(v=isolate(tf_indexFlow()))
       
       par(mar = old_mar)
