@@ -24,48 +24,48 @@ ui <- fluidPage(
   tabsetPanel(
     
     # Landing Page
-    tabPanel("Overview",
-             tags$head(
-               tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
-               tags$meta(name = "viewport", content = "initial-scale=1")
-             ),
-             setBackgroundColor("white"),
-             fluidPage(
-               splitLayout(
-                 cellWidths = c("50%", "50%"),
-                 cellArgs = list(style = 'white-space: normal;'),
-                 tags$img(
-                   class = 'image',
-                   height = "98%",
-                   width = "98%",
-                   src = "silvercreekSquare.jpg",
-                   align = "left",
-                   style = "border: 10px solid #ECF0F1; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"
-                 ),
-                 tags$div(
-                   # class = "text-block",
-                   # style = "margin-top: -20px; background-color: transparent; box-shadow: 2px 4px 10px black; border-radius: 5px; padding: 5%; box-sizing: border-box;",
-                   tags$h1(
-                     "Big Wood River Streamflow and Water Quality Tools",
-                     style = "color: #2980B9; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.5vw; font-weight: bold; text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); background-color: transparent; border-radius: 5px; word-wrap: break-word; max-width: 100%;"
-                   )
-                 )
-               ),
-               tags$div(
-                 class = "landing-block",
-                 style = "background-color: white; font-size: 2.5vh; text-align: center; margin-top: -20px; margin-left: 35px; box-shadow: 2px 4px 10px black;",
-                 p(class = "lp_text", "The Big Wood River Dashboard is an interactive set of tools to visualize observational data and modeling output in the Big Wood River Basin and Silver Creek."),
-                 p(
-                   class = "lp_text",
-                   "This integrates data from a range of sources and provides timely information that may be used to inform water management in the basin. Use the toolbar at the top of the page to select the data or information category of interest, and you'll be directed to a dynamic graph for visualization."
-                 ),
-                 p(
-                   class = "lp_text",
-                   "The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. The data explorer allows you to dig into the datasets behind these models and explore changes over time."
-                 )
-               )
-             )
-    ),
+    # tabPanel("Overview",
+    #          tags$head(
+    #            tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
+    #            tags$meta(name = "viewport", content = "initial-scale=1")
+    #          ),
+    #          setBackgroundColor("white"),
+    #          fluidPage(
+    #            splitLayout(
+    #              cellWidths = c("50%", "50%"),
+    #              cellArgs = list(style = 'white-space: normal;'),
+    #              tags$img(
+    #                class = 'image',
+    #                height = "98%",
+    #                width = "98%",
+    #                src = "silvercreekSquare.jpg",
+    #                align = "left",
+    #                style = "border: 10px solid #ECF0F1; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"
+    #              ),
+    #              tags$div(
+    #                # class = "text-block",
+    #                # style = "margin-top: -20px; background-color: transparent; box-shadow: 2px 4px 10px black; border-radius: 5px; padding: 5%; box-sizing: border-box;",
+    #                tags$h1(
+    #                  "Big Wood River Streamflow and Water Quality Tools",
+    #                  style = "color: #2980B9; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.5vw; font-weight: bold; text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); background-color: transparent; border-radius: 5px; word-wrap: break-word; max-width: 100%;"
+    #                )
+    #              )
+    #            ),
+    #            tags$div(
+    #              class = "landing-block",
+    #              style = "background-color: white; font-size: 2.5vh; text-align: center; margin-top: -20px; margin-left: 35px; box-shadow: 2px 4px 10px black;",
+    #              p(class = "lp_text", "The Big Wood River Dashboard is an interactive set of tools to visualize observational data and modeling output in the Big Wood River Basin and Silver Creek."),
+    #              p(
+    #                class = "lp_text",
+    #                "This integrates data from a range of sources and provides timely information that may be used to inform water management in the basin. Use the toolbar at the top of the page to select the data or information category of interest, and you'll be directed to a dynamic graph for visualization."
+    #              ),
+    #              p(
+    #                class = "lp_text",
+    #                "The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. The data explorer allows you to dig into the datasets behind these models and explore changes over time."
+    #              )
+    #            )
+    #          )
+    # ),
     
     # Streamflow Tools
     tabPanel("Streamflow Forecasts",
@@ -97,9 +97,9 @@ ui <- fluidPage(
                # Show a plot of the generated distribution
                mainPanel(
                  br(),
-                 p('Streamflow Forecast for', currentModelDate, style = "font-weight: bolder; font-size: 20px;"), #check to make sure this works, or alt way??
-                 tableOutput("forecasted_vols"), 
-                 p('Forecasted irrigation season streamflow volumes with exceedance probabilities, these probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
+                 p('Streamflow Forecast as of', currentModelDate, style = "font-weight: bolder; font-size: 20px;"), #check to make sure this works, or alt way??
+                 tableOutput("forecasted_vols" ), 
+                 p('Forecasted irrigation season streamflow volumes (KAF) with exceedance probabilities. The 50th percentile is the average forecast. These probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(),
                  
                  plotOutput("gen_bw_plot", width = "90%"),
@@ -226,21 +226,24 @@ ui <- fluidPage(
 ########---------Server side.  Note that the server side instanc3e is shared between multiple applications (UIs), so avoid use of UI-specific variables here.
 server <- function(input, output) {
   
-  output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
-  output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
-  output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"), digits = 0)
+  #output$big_vols <- renderPlot({readRDS("www/sampled_volumes.rds")})
+  #output$sc_vols <- renderPlot({readRDS(file.path(paste0("www/sampled_sc_vol-", end_date, ".rds")))})
+  #output$forecasted_vols <- renderTable(readRDS("www/ex.vols.rds"), digits = 0)
+ 
+  output$forecasted_vols <- renderTable(dbGetQuery(conn,'SELECT "Exceedance", "bwh.irr_vol" AS "Big Wood at Hailey", "bws.irr_vol" AS "Big Wood at Stanton", "sc.irr_vol" AS "Silver Creek", "cc.irr_vol" AS "Camas Creek" FROM exceednaceprobabilities;'),
+                                        width="80%") # note table misspelling, need to fix
   
   #this will all go in the ui side for user to select timescale (stream flow model output will be static though)
-  useLocations=dbGetQuery(conn, "SELECT locationid, name FROM locations WHERE locations.name IN ('BIG WOOD RIVER AT HAILEY', 'BIG WOOD RIVER AT STANTON CROSSING', 'CAMAS CREEK NR BLAINE ID' );")
-  useMetrics=dbGetQuery(conn, "SELECT metricid, name, isprediction FROM metrics WHERE metrics.name IN ('irrigation season volume (april 1 - september 31)', 'simulated irrigation season volume (april 1 - september 31)');")
-  
-  query=paste0("SELECT metric, value, locationid, simnumber FROM data WHERE data.metricid IN ('",
-               paste0(useMetrics$metricid,collapse="', '"),
-               "') AND data.locationid IN ('",
-               paste0(useLocations$locationid,collapse="', '"),"');")
-  
-  useData=dbGetQuery(conn,query)
-  useData=merge(useData,useMetrics,by.x="metric",by.y="name")
+  # useLocations=dbGetQuery(conn, "SELECT locationid, name FROM locations WHERE locations.name IN ('BIG WOOD RIVER AT HAILEY', 'BIG WOOD RIVER AT STANTON CROSSING', 'CAMAS CREEK NR BLAINE ID' );")
+  # useMetrics=dbGetQuery(conn, "SELECT metricid, name, isprediction FROM metrics WHERE metrics.name IN ('irrigation season volume (april 1 - september 31)', 'simulated irrigation season volume (april 1 - september 31)');")
+  # 
+  # query=paste0("SELECT metric, value, locationid, simnumber FROM data WHERE data.metricid IN ('",
+  #              paste0(useMetrics$metricid,collapse="', '"),
+  #              "') AND data.locationid IN ('",
+  #              paste0(useLocations$locationid,collapse="', '"),"');")
+  # 
+  # useData=dbGetQuery(conn,query)
+  # useData=merge(useData,useMetrics,by.x="metric",by.y="name")
   
   output$gen_bw_plot <- renderPlot({
     gen_bw(vol.big, ex.vols3)  # Call the gen_bw function here to generate the plot
