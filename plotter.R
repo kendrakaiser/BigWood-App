@@ -1,10 +1,4 @@
 # Figures and tables for data analysis and model output from wood river streamflow forecasting
-
-#--------------------------------------------------------------#
-library("dplyr")
-library("tidyr")
-#--------------------------------------------------------------#
-
 pred.yr <<- 2024 # loop back to this
 sitelabs<- c( "Big Wood Hailey", "Big Wood Stanton", "Camas Creek", "Silver Creek")
 
@@ -184,7 +178,7 @@ gen_sc <- function(vol.sc,ex.vols3){
 }
 
 gen_cc <- function(vol.cc, exvols3){
-  pc<- ggplot(vol.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
+  pc<- ggplot(vol1.cc, fill = t, aes(x=site, y=value, fill=site), alpha=0.6) +
     geom_boxplot(outlier.alpha = 0.3) +
     scale_fill_manual(values=c("royalblue3", "grey90")) +
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10))+
@@ -200,5 +194,149 @@ gen_cc <- function(vol.cc, exvols3){
     ylab("")
   
   return(pc)
+}
+
+#--------------------#
+# making historical boxplots
+#--------------------#
+
+query <- sprintf("SELECT site,simdate,rundate,stat,value FROM summarystatistics WHERE site = 'bwh' AND stat != 'n' AND stat != 'outlier'")
+bwh <- dbGetQuery(conn,query)
+bwh$rundate <- as.Date(bwh$rundate)
+bwh$t <- 'Modeled'
+bwh$t <- factor(bwh$t)
+bwh$value <- bwh$value/1000
+
+bwh <- bwh %>% # removing duplicates where multiple model outputs exist for the same rundate
+  group_by(rundate, stat) %>%
+  arrange(rundate) %>%
+  distinct(stat, .keep_all = TRUE) %>%
+  ungroup()
+
+histbwh <- function(){
+  ggplot(bwh, aes(x = rundate, y = value, fill = t)) +  # Add closing parenthesis here
+    stat_boxplot(geom="errorbar", width=0.2) +
+    geom_boxplot(aes(fill=t),position = "identity", width = 0.2,fill='yellow') +
+    facet_wrap(~ rundate, scales = "free_x", nrow = 1) + 
+    labs(x = "", y = "Modeled Streamflow Volume (KAF)") +
+    ggtitle("Big Wood at Hailey") +
+    theme_minimal() +
+    guides(fill = 'none') +
+    theme(strip.text.x = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5)) 
+}
+
+query <- sprintf("SELECT site,simdate,rundate,stat,value FROM summarystatistics WHERE site = 'bws' AND stat != 'n' AND stat != 'outlier'")
+bws <- dbGetQuery(conn,query)
+bws$rundate <- as.Date(bws$rundate)
+bws$t <- 'Modeled'
+bws$t <- factor(bws$t)
+bws$value <- bws$value/1000
+
+bws <- bws %>% # removing duplicates where multiple model outputs exist for the same rundate
+  group_by(rundate, stat) %>%
+  arrange(rundate) %>%
+  distinct(stat, .keep_all = TRUE) %>%
+  ungroup()
+
+histbws <- function(){
+  ggplot(bws, aes(x = rundate, y = value, fill = t)) +  # Add closing parenthesis here
+    stat_boxplot(geom="errorbar", width=0.2) +
+    geom_boxplot(aes(fill=t),position = "identity", width = 0.2,fill='yellow') +
+    facet_wrap(~ rundate, scales = "free_x", nrow = 1) + 
+    labs(x = "", y = "Modeled Streamflow Volume (KAF)") +
+    ggtitle("Big Wood at Stanton") +
+    theme_minimal() +
+    guides(fill = 'none') +
+    theme(strip.text.x = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5)) 
+}
+# bws
+
+query <- sprintf("SELECT site,simdate,rundate,stat,value FROM summarystatistics WHERE site = 'bwh' AND stat != 'n' AND stat != 'outlier'")
+bwh <- dbGetQuery(conn,query)
+bwh$rundate <- as.Date(bwh$rundate)
+bwh$t <- 'Modeled'
+bwh$t <- factor(bwh$t)
+bwh$value <- bwh$value/1000
+
+bwh <- bwh %>% # removing duplicates where multiple model outputs exist for the same rundate
+  group_by(rundate, stat) %>%
+  arrange(rundate) %>%
+  distinct(stat, .keep_all = TRUE) %>%
+  ungroup()
+
+histbwh <- function(){
+  ggplot(bwh, aes(x = rundate, y = value, fill = t)) +  # Add closing parenthesis here
+    stat_boxplot(geom="errorbar", width=0.2) +
+    geom_boxplot(aes(fill=t),position = "identity", width = 0.2,fill='yellow') +
+    facet_wrap(~ rundate, scales = "free_x", nrow = 1) + 
+    labs(x = "", y = "Modeled Streamflow Volume (KAF)") +
+    ggtitle("Big Wood at Hailey") +
+    theme_minimal() +
+    guides(fill = 'none') +
+    theme(strip.text.x = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5)) 
+}
+
+# cc
+
+query <- sprintf("SELECT site,simdate,rundate,stat,value FROM summarystatistics WHERE site = 'cc' AND stat != 'n' AND stat != 'outlier'")
+cc <- dbGetQuery(conn,query)
+cc$rundate <- as.Date(cc$rundate)
+cc$t <- 'Modeled'
+cc$t <- factor(cc$t)
+cc$value <- cc$value/1000
+
+cc <- cc %>% # removing duplicates where multiple model outputs exist for the same rundate
+  group_by(rundate, stat) %>%
+  arrange(rundate) %>%
+  distinct(stat, .keep_all = TRUE) %>%
+  ungroup()
+
+histcc <- function(){
+  ggplot(cc, aes(x = rundate, y = value, fill = t)) +  # Add closing parenthesis here
+    stat_boxplot(geom="errorbar", width=0.2) +
+    geom_boxplot(aes(fill=t),position = "identity", width = 0.2,fill='yellow') +
+    facet_wrap(~ rundate, scales = "free_x", nrow = 1) + 
+    labs(x = "", y = "Modeled Streamflow Volume (KAF)") +
+    ggtitle("Camas Creek") +
+    theme_minimal() +
+    guides(fill = 'none') +
+    theme(strip.text.x = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5)) 
+}
+
+# sc
+
+query <- sprintf("SELECT site,simdate,rundate,stat,value FROM summarystatistics WHERE site = 'sc' AND stat != 'n' AND stat != 'outlier'")
+sc <- dbGetQuery(conn,query)
+sc$rundate <- as.Date(sc$rundate)
+sc$t <- 'Modeled'
+sc$t <- factor(sc$t)
+sc$value <- sc$value/1000
+
+sc <- sc %>% # removing duplicates where multiple model outputs exist for the same rundate
+  group_by(rundate, stat) %>%
+  arrange(rundate) %>%
+  distinct(stat, .keep_all = TRUE) %>%
+  ungroup()
+
+histsc <- function(){
+  ggplot(sc, aes(x = rundate, y = value, fill = t)) +  # Add closing parenthesis here
+    stat_boxplot(geom="errorbar", width=0.2) +
+    geom_boxplot(aes(fill=t),position = "identity", width = 0.2,fill='yellow') +
+    facet_wrap(~ rundate, scales = "free_x", nrow = 1) + 
+    labs(x = "", y = "Modeled Streamflow Volume (KAF)") +
+    ggtitle("Silver Creek") +
+    theme_minimal() +
+    guides(fill = 'none') +
+    theme(strip.text.x = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5)) 
 }
 
