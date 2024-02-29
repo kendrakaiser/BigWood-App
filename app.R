@@ -183,7 +183,7 @@ ui <- fluidPage(
                  selectInput(
                    "plotVars",
                    NULL,
-                   choices= dbGetQuery(conn,"SELECT name FROM metrics;"),
+                   choices= c("flow", "Water Temperature", "Dissolved Oxygen", "depth to groundwater", "air temperature"),#dbGetQuery(conn,"SELECT name FROM metrics;"),
                    selected = NULL,
                    multiple = T,
                    selectize = TRUE,
