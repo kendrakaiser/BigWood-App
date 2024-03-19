@@ -24,48 +24,48 @@ ui <- fluidPage(
   tabsetPanel(
     
     # Landing Page
-    # tabPanel("Overview",
-    #          tags$head(
-    #            tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
-    #            tags$meta(name = "viewport", content = "initial-scale=1")
-    #          ),
-    #          setBackgroundColor("white"),
-    #          fluidPage(
-    #            splitLayout(
-    #              cellWidths = c("50%", "50%"),
-    #              cellArgs = list(style = 'white-space: normal;'),
-    #              tags$img(
-    #                class = 'image',
-    #                height = "98%",
-    #                width = "98%",
-    #                src = "silvercreekSquare.jpg",
-    #                align = "left",
-    #                style = "border: 10px solid #ECF0F1; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"
-    #              ),
-    #              tags$div(
-    #                # class = "text-block",
-    #                # style = "margin-top: -20px; background-color: transparent; box-shadow: 2px 4px 10px black; border-radius: 5px; padding: 5%; box-sizing: border-box;",
-    #                tags$h1(
-    #                  "Big Wood River Streamflow and Water Quality Tools",
-    #                  style = "color: #2980B9; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.5vw; font-weight: bold; text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); background-color: transparent; border-radius: 5px; word-wrap: break-word; max-width: 100%;"
-    #                )
-    #              )
-    #            ),
-    #            tags$div(
-    #              class = "landing-block",
-    #              style = "background-color: white; font-size: 2.5vh; text-align: center; margin-top: -20px; margin-left: 35px; box-shadow: 2px 4px 10px black;",
-    #              p(class = "lp_text", "The Big Wood River Dashboard is an interactive set of tools to visualize observational data and modeling output in the Big Wood River Basin and Silver Creek."),
-    #              p(
-    #                class = "lp_text",
-    #                "This integrates data from a range of sources and provides timely information that may be used to inform water management in the basin. Use the toolbar at the top of the page to select the data or information category of interest, and you'll be directed to a dynamic graph for visualization."
-    #              ),
-    #              p(
-    #                class = "lp_text",
-    #                "The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. The data explorer allows you to dig into the datasets behind these models and explore changes over time."
-    #              )
-    #            )
-    #          )
-    # ),
+    tabPanel("Overview",
+             tags$head(
+               tags$link(rel = "stylesheet", type = "text/css", href = "app.css"),
+               tags$meta(name = "viewport", content = "initial-scale=1")
+             ),
+             setBackgroundColor("white"),
+             fluidPage(
+               splitLayout(
+                 cellWidths = c("50%", "50%"),
+                 cellArgs = list(style = 'white-space: normal;'),
+                 tags$img(
+                   class = 'image',
+                   height = "98%",
+                   width = "98%",
+                   src = "silvercreekSquare.jpg",
+                   align = "left",
+                   style = "border: 10px solid #ECF0F1; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"
+                 ),
+                 tags$div(
+                   # class = "text-block",
+                   # style = "margin-top: -20px; background-color: transparent; box-shadow: 2px 4px 10px black; border-radius: 5px; padding: 5%; box-sizing: border-box;",
+                   tags$h1(
+                     "Big Wood River Streamflow and Water Quality Tools",
+                     style = "color: #2980B9; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.5vw; font-weight: bold; text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2); background-color: transparent; border-radius: 5px; word-wrap: break-word; max-width: 100%;"
+                   )
+                 )
+               ),
+               tags$div(
+                 class = "landing-block",
+                 style = "background-color: white; font-size: 2.5vh; text-align: center; margin-top: -20px; margin-left: 35px; box-shadow: 2px 4px 10px black;",
+                 p(class = "lp_text", "The Big Wood River Dashboard is an interactive set of tools to visualize observational data and modeling output in the Big Wood River Basin and Silver Creek."),
+                 p(
+                   class = "lp_text",
+                   "This integrates data from a range of sources and provides timely information that may be used to inform water management in the basin. Use the toolbar at the top of the page to select the data or information category of interest, and you'll be directed to a dynamic graph for visualization."
+                 ),
+                 p(
+                   class = "lp_text",
+                   "The Big Wood Streamflow Tools provide real-time forecasts of the irrigation season streamflow volumes on the Big Wood, Camas Creek, and Silver Creek. The Water Quality Tools are focused on stream health in Silver Creek as it pertains to the trout fishery. The data explorer allows you to dig into the datasets behind these models and explore changes over time."
+                 )
+               )
+             )
+    ),
     
     # Streamflow Tools
     tabPanel("Streamflow Forecasts",
