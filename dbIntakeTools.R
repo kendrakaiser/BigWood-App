@@ -123,10 +123,16 @@ dbWriteData=function(metric,value,datetime,locationID,sourceName,units="",isPred
   writeMe=data.frame(metric=metricName,value=value,datetime=datetime,metricid=metricID,locationid=locationID,batchid=batchID,simnumber=simnumber)
   writeMe$value=as.numeric(writeMe$value)
   writeMe=writeMe[complete.cases(writeMe$value),]
+  writeMe$datetime=format.Date(writeMe$datetime, format = "%Y-%m-%d %H:%M:%S")
+  
+  print(paste("Before DeDuplication:",nrow(writeMe),"records"))
   
   potentialDups=dbGetQuery(conn, paste0("SELECT metricid, metric, value, datetime, locationid, simnumber FROM data WHERE metricid = '",metricID,
                                         "' AND locationid IN ('",paste(locationID,collapse="', '"),"') AND  datetime IN ('",
                                         paste(datetime,collapse="', '"),"');"))
+  
+  potentialDups$datetime=format.Date(potentialDups$datetime, format = "%Y-%m-%d %H:%M:%S")
+  
   
   potentialDups=rbind(potentialDups,writeMe[,c("metricid","metric","value","datetime","locationid","simnumber")])
   
@@ -142,11 +148,14 @@ dbWriteData=function(metric,value,datetime,locationID,sourceName,units="",isPred
   
   if(nrow(notDups)>=1){
     writeMe=merge(notDups,writeMe)
-    if(qcStatus==F){
-      writeMe$qcstatus="false"
-    }
-    dbAppendTable(conn, name="data", value=writeMe)
+    print(paste("After DeDuplication:",nrow(writeMe),"records to write"))
     
+    if(nrow(writeMe)>=1){
+      
+      dbAppendTable(conn, name="data", value=writeMe)
+    }
+  } else {
+    print("After DeDuplication: 0 records to write")
   }
   #one at a time (for debug)
   #  for(i in 1:nrow(writeMe)){

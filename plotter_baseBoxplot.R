@@ -69,3 +69,16 @@ bw_bxpList=mergeBxpLists(boxplot.stats(hist_irr$irr_vol[hist_irr$sitenote== 'bwh
 
 bxp(bw_bxpList,names=c("BWH","BWH_P","BWS","BWS_P"),show.names = F, border=c("royalblue3", "grey60"))
 axis(1, at=1:4, labels=c("BWH","BWH_Predict","BWS","BWS_Predict"))
+
+
+cc_bxpList=mergeBxpLists(boxplot.stats(hist_irr$irr_vol[hist_irr$sitenote== 'cc']),
+                         makeBoxplotData(dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site = 'cc' AND simdate = (SELECT MAX(simdate) FROM summarystatistics);"))
+)
+
+bxp(cc_bxpList,names=c("CC","CC_P"),show.names = F, border=c("royalblue3", "grey60"))
+axis(1, at=1:2, labels=c("CC","CC_Predict"))
+
+
+
+dbGetQuery(conn,"SELECT * FROM summarystatistics WHERE site = 'cc' AND stat = 'med' ORDER BY simdate DESC;")
+
