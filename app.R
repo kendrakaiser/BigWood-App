@@ -98,11 +98,11 @@ ui <- fluidPage(
                mainPanel(
                  br(),
                  p('Streamflow Forecast as of', currentModelDate, style = "font-weight: bolder; font-size: 20px;"), #check to make sure this works, or alt way??
-                 tableOutput("forecasted_vols" ), 
+                 #tableOutput("forecasted_vols" ), 
                  p('Forecasted irrigation season streamflow volumes (KAF) with exceedance probabilities. The 50th percentile is the average forecast. These probabilities are aligned with the Northwest River Forecasting Center for comparison purposes.'),
                  br(),
                  
-                 plotOutput("gen_bw_plot", width = "90%"),
+                 #plotOutput("gen_bw_plot", width = "90%"),
                  
                  p('Figure 1: These box plots show the historic range of irrigation season volume (blue) and the forecasted range of volumes (grey) for each gage. 
                    The boxes represent the 25th - 75th percentiles and the solid line in the middle is the median forecasted value.', style = "font-size:1.5vh"),
@@ -110,8 +110,8 @@ ui <- fluidPage(
                  div(
                    
                    style = "display: flex; justify-content: space-evenly;",
-                   plotOutput("gen_sc_plot", width="45%"),
-                   plotOutput("gen_cc_plot", width="45%")
+                   #plotOutput("gen_sc_plot", width="45%"),
+                   #plotOutput("gen_cc_plot", width="45%")
                  ),
                  p('Figure 2: Box plots of Silver Creek and Camas Creek historic and forecasted streamflow'),
                  
